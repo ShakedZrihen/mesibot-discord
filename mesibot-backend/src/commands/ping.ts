@@ -1,9 +1,8 @@
-import { Response, Request } from "express";
-import { ResponseType } from "../types";
+import { ResponseType, interactionPayload } from "../types";
 
-export const ping = (req: Request, res: Response) => {
+export const ping = ({ res }: interactionPayload) => {
   res.json({
-    type: ResponseType.withMessage,
+    type: ResponseType.Immediate,
     data: { content: "🏓 Pong!" }
   });
 };

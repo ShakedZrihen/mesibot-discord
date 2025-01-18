@@ -1,3 +1,4 @@
 export enum ResponseType {
-  withMessage = 4
+  Immediate = 4,
+  Defer = 5
 }

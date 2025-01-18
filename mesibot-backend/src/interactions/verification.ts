@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
+import { interactionPayload } from "../types";
 
-export const verification = (req: Request, res: Response) => {
+export const verification = ({ res }: interactionPayload) => {
   console.log("✅ Responding to Discord verification request...");
   res.json({ type: 1 });
 };

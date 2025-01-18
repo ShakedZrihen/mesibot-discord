@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
 import { commandHandlers } from "../commands";
+import { interactionPayload } from "../types";
 
-export const slashCommands = (req: Request, res: Response) => {
+export const slashCommands = ({ req, res }: interactionPayload) => {
   const interaction = req.body;
   const commandHandler = commandHandlers[interaction.data.name];
 
@@ -10,5 +10,5 @@ export const slashCommands = (req: Request, res: Response) => {
     return;
   }
 
-  commandHandler(req, res);
+  commandHandler({ req, res });
 };
