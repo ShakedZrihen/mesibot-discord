@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:dev": "npx ts-node src/server.ts"
+    "dev": "nodemon"
   },
   "keywords": [],
   "author": "ShakedZrihen",
@@ -14,8 +14,10 @@
     "@distube/ytdl-core": "^4.15.8",
     "aws-sdk": "^2.1692.0",
     "cors": "^2.8.5",
+    "discord.js": "^14.17.3",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "tweetnacl": "^1.0.3",
     "ws": "^8.18.0",
     "youtube-dl-exec": "^3.0.13",
     "ytdl-core": "^4.11.5",
