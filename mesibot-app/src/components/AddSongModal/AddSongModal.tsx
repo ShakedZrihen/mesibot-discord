@@ -17,6 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import MicIcon from "../../assets/micIcon.svg?react";
 import { useState } from "react";
 import { Colors, MESIBOT_GRADIENT } from "../../consts/colors";
+import HeartSongIcon from "../../assets/heartSong.svg?react";
 
 interface AddSongModalProps {
   open: boolean;
@@ -60,7 +61,8 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
         }}
       >
         <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="h6" fontWeight="bold">
+          <HeartSongIcon width={30} />
+          <Typography variant="h6" fontWeight="300">
             Add a song
           </Typography>
         </Box>
