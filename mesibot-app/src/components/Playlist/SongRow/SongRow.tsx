@@ -3,6 +3,7 @@ import { StyledSongRow } from "./SongRow.style";
 import type { SongRow as SongRowType } from "../types";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import { Colors } from "../../../consts/colors";
 
 interface SongRowProps extends SongRowType {
   onLike?: () => void;
@@ -27,10 +28,10 @@ export const SongRow = (props: SongRowProps) => {
       </Box>
 
       <Box display="flex" alignItems="center" gap={2}>
-        <IconButton sx={{ color: "#10B9D0" }} size="small">
+        <IconButton sx={{ color: Colors.goodGreen }} size="small">
           <ThumbUpIcon fontSize="inherit" />
         </IconButton>
-        <IconButton size="small" sx={{ color: "#F92464" }}>
+        <IconButton size="small" sx={{ color: Colors.vividPink }}>
           <ThumbDownIcon fontSize="inherit" />
         </IconButton>
         <Avatar src={addedBy} sx={{ width: 32, height: 32 }} />

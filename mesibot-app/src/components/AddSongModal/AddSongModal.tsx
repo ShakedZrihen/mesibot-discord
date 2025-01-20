@@ -16,6 +16,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import MicIcon from "../../assets/micIcon.svg?react";
 import { useState } from "react";
+import { Colors, MESIBOT_GRADIENT } from "../../consts/colors";
 
 interface AddSongModalProps {
   open: boolean;
@@ -42,9 +43,9 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
             : "none",
           backgroundRepeat: isMobile ? "repeat" : "none",
           backgroundSize: isMobile ? "auto" : "none",
-          boxShadow: isMobile ? "none" : "rgb(134, 55, 231) -4px 4px 0px 0px",
+          boxShadow: isMobile ? "none" : `${Colors.purple} -4px 4px 0px 0px`,
           borderRadius: "0",
-          border: isMobile ? "none" : "1px solid #222326",
+          border: isMobile ? "none" : `1px solid ${Colors.text}`,
           paddingBottom: isMobile ? "8px" : "16px" // Reduce padding for mobile
         }
       }}
@@ -86,12 +87,12 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
           <div onMouseDown={() => setRecording(true)} onMouseUp={() => setRecording(false)}>
             <Avatar
               sx={{
-                bgcolor: "white",
-                border: `1px solid ${recording ? "#ef2cdc" : "#000000"}`,
+                bgcolor: Colors.white,
+                border: `1px solid ${recording ? Colors.pink : Colors.black}`,
                 ":hover": { cursor: "pointer" }
               }}
             >
-              <MicIcon width={16} color={recording ? "#ef2cdc" : "#000000"} />
+              <MicIcon width={16} color={recording ? Colors.pink : Colors.black} />
             </Avatar>
           </div>
 
@@ -110,10 +111,10 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
           fullWidth
           variant="contained"
           sx={{
-            background: "linear-gradient(269.98deg, #FFA05B 5.78%, #EF2CDC 68.74%, #2C3FEF 102.49%)",
-            color: "#fff",
+            background: MESIBOT_GRADIENT,
+            color: Colors.white,
             fontWeight: "bold",
-            "&:hover": { backgroundColor: "#D12ABA" }
+            "&:hover": { backgroundColor: Colors.pinkier }
           }}
           onClick={() => {
             console.log("Song Added:", { selectedSong });

@@ -3,6 +3,7 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import { SongRow } from "./SongRow/SongRow";
 import { SongRow as SongRowType } from "./types";
+import { Colors } from "../../consts/colors";
 
 interface PlaylistProps {
   currentSong: {
@@ -21,7 +22,7 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
     <Box margin="2rem">
       <Box
         sx={{
-          backgroundColor: "#1E1E1E",
+          backgroundColor: Colors.mostlyBlack,
           padding: "16px",
           borderRadius: "8px",
           color: "white",

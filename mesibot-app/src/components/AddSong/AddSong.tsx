@@ -1,13 +1,14 @@
 import { Fab, styled } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { Colors } from "../../consts/colors";
 
 const StyledFab = styled(Fab)`
   position: fixed;
   bottom: 1rem;
   right: 1rem;
-  background-color: #ef2cdc;
+  background-color: ${Colors.pink};
   &:hover {
-    background-color: #d12aba;
+    background-color: ${Colors.pinkier};
   }
 `;
 
