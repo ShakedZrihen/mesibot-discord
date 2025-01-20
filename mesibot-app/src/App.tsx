@@ -1,15 +1,7 @@
-import RadioPlayer from "./components/RadioPlayer/RadioPlater";
+import { Home } from "./pages/Home/Home";
 
 function App() {
-  return (
-    <>
-      <h1>Mesibot</h1>
-      <div className="card">
-        <RadioPlayer />
-      </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-    </>
-  );
+  return <Home />;
 }
 
 export default App;
