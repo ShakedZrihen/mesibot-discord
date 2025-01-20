@@ -11,9 +11,13 @@ const StyledFab = styled(Fab)`
   }
 `;
 
-export const AddSong = () => {
+interface AddSongProps {
+  onClick: () => void;
+}
+
+export const AddSong = ({ onClick }: AddSongProps) => {
   return (
-    <StyledFab color="primary" aria-label="add" onClick={() => alert("Add a new song!")}>
+    <StyledFab color="primary" aria-label="add" onClick={onClick}>
       <AddIcon />
     </StyledFab>
   );
