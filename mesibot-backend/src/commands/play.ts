@@ -1,28 +1,32 @@
 import youtubedl from "youtube-dl-exec";
-import { createAudioPlayer, createAudioResource, joinVoiceChannel, VoiceConnection } from "@discordjs/voice";
+import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
+import { playlistService } from "../services/playlist";
+import { player } from "../clients/player";
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
   let connection: VoiceConnection | null = null;
-  const url = interaction.data.options[0]?.value;
+  const playlistId = interaction.data.options[0]?.value;
 
-  if (!url) {
-    return res.json({
+  if (!playlistId) {
+    res.json({
       type: ResponseType.Immediate,
-      data: { content: "❌ Please provide a valid YouTube URL." }
+      data: { content: "❌ Please provide a valid playlist ID." }
     });
+    return;
   }
 
   const guild = client.guilds.cache.get(interaction.guild_id);
   const member = await guild?.members.fetch(interaction.member.user.id);
 
   if (!member?.voice.channel) {
-    return res.json({
+    res.json({
       type: ResponseType.Immediate,
       data: { content: "❌ You must be in a voice channel to use this command." }
     });
+    return;
   }
 
   try {
@@ -32,35 +36,63 @@ export const play = async ({ req, res }: interactionPayload) => {
       adapterCreator: guild?.voiceAdapterCreator as any
     });
 
-    const player = createAudioPlayer();
     connection.subscribe(player);
 
     res.json({
       type: ResponseType.Immediate,
-      data: { content: `🎉 Started the party 🎉` }
+      data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
 
-    // ✅ Use yt-dlp to get the direct audio URL
+    // ✅ Trigger backend to get the first song
+    const playlist = await playlistService.play(playlistId);
+
+    if (!playlist || !playlist.currentPlaying) {
+      throw new Error("No valid song found in the playlist.");
+    }
+
+    await playSong(player, playlistId, playlist.currentPlaying.url);
+  } catch (error) {
+    console.error("❌ Error playing audio:", error);
+    res.json({
+      type: ResponseType.Immediate,
+      data: { content: "❌ Error playing music." }
+    });
+  }
+};
+
+/**
+ * Plays a song and triggers the next one when finished.
+ */
+const playSong = async (player: any, playlistId: string, url: string) => {
+  try {
     const audioInfo = (await youtubedl(url, {
-      dumpSingleJson: true, // Ensure JSON output
-      format: "bestaudio[ext=webm]", // ✅ Force best audio format
-      noPlaylist: true, // ✅ Ensure it's a single video
-      noCheckCertificates: true, // ✅ Prevent SSL errors
-      addHeader: ["referer:youtube.com", "user-agent:googlebot"] // ✅ Spoof headers for YouTube
+      dumpSingleJson: true,
+      format: "bestaudio[ext=webm]",
+      noPlaylist: true,
+      noCheckCertificates: true,
+      addHeader: ["referer:youtube.com", "user-agent:googlebot"]
     })) as any;
 
     if (!audioInfo || !audioInfo.url) {
       throw new Error("No valid audio URL found.");
     }
 
-    // ✅ Create an audio resource using the extracted URL
     const audioResource = createAudioResource(audioInfo.url);
     player.play(audioResource);
-  } catch (error) {
-    console.error("❌ Error playing audio:", error);
-    return res.json({
-      type: ResponseType.Immediate,
-      data: { content: "❌ Error playing music." }
+
+    // ✅ Auto-play next song when the current one finishes
+    player.on(AudioPlayerStatus.Idle, async () => {
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // ✅ Adds a 3-second buffer
+
+      console.log("✅ Song finished, playing next...");
+      const updatedPlaylist = await playlistService.playNext(playlistId);
+      if (updatedPlaylist?.currentPlaying) {
+        playSong(player, playlistId, updatedPlaylist.currentPlaying.url);
+      } else {
+        console.log("🎵 Playlist ended.");
+      }
     });
+  } catch (error) {
+    console.error("❌ Error playing song:", error);
   }
 };

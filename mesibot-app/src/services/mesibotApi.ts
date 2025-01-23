@@ -1,7 +1,7 @@
 import { Song } from "../types/playlist";
 import axios from "axios";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "https://mesibot-be.ngrok.io";
 const PLAYLIST_ID = "67926c2b408ebe6cf58e7dcd";
 const API_PATHS = {
   songs: "/api/songs",

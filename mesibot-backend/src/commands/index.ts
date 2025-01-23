@@ -1,8 +1,10 @@
 import { CLIENT_ID, DISCORD_TOKEN } from "../env";
 import { join } from "./join";
+import { pause } from "./pause";
 import { ping } from "./ping";
 import { play } from "./play";
 import { REST, Routes } from "discord.js";
+import { resume } from "./resume";
 
 const commands = [
   {
@@ -10,12 +12,20 @@ const commands = [
     description: "Play music from YouTube",
     options: [
       {
-        name: "url",
+        name: "playlist-id",
         type: 3, // Type 3 = STRING
-        description: "YouTube video URL",
+        description: "playlist id",
         required: true
       }
     ]
+  },
+  {
+    name: "pause",
+    description: "Pause playlist"
+  },
+  {
+    name: "resume",
+    description: "Resume playlist"
   },
   {
     name: "join",
@@ -35,7 +45,7 @@ async function registerCommands() {
     await rest.put(Routes.applicationCommands(CLIENT_ID!), { body: commands });
     console.log("✅ Slash commands registered!");
   } catch (error) {
-    console.error("❌ Error registering commands:", error);
+    console.error("❌ Error registering commands:", JSON.stringify(error));
   }
 }
 
@@ -44,5 +54,7 @@ registerCommands();
 export const commandHandlers: Record<string, any> = {
   ping: ping,
   play: play,
+  pause: pause,
+  resume: resume,
   join: join
 };
