@@ -4,20 +4,21 @@ import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import { SongRow } from "./SongRow/SongRow";
 import { SongRow as SongRowType } from "./types";
 import { Colors } from "../../consts/colors";
+import { downvoteSong, upvoteSong } from "../../services/mesibotApi";
+import { useAppContext } from "../../context/useAppContext";
 
 interface PlaylistProps {
-  currentSong: {
-    image: string;
-    name: string;
-    artist: string;
-    addedBy: string;
-    likes: number;
-    dislikes: number;
-  };
+  currentSong: SongRowType | null;
   songs: SongRowType[];
 }
 
 export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
+  const { connectedUser } = useAppContext();
+
+  if (!currentSong) {
+    return null;
+  }
+
   return (
     <Box margin="2rem">
       <Box
@@ -31,20 +32,32 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
       >
         <Box display="flex" alignItems="center" gap={2}>
           <Box>
-            <Typography variant="h6">{currentSong.name}</Typography>
-            <Typography variant="body2" color="gray">
+            <Typography variant="h6">{currentSong.title}</Typography>
+            {/* <Typography variant="body2" color="gray">
               {currentSong.artist}
-            </Typography>
+            </Typography> */}
             <Box display="flex" alignItems="center" gap={1} mt={1}>
-              <Button startIcon={<ThumbUpIcon />} sx={{ color: "white", minWidth: "40px" }}>
-                {currentSong.likes}
+              <Button
+                onClick={() => {
+                  upvoteSong(currentSong._id, connectedUser);
+                }}
+                startIcon={<ThumbUpIcon />}
+                sx={{ color: "white", minWidth: "40px" }}
+              >
+                {currentSong.upvotes}
               </Button>
-              <Button startIcon={<ThumbDownIcon />} sx={{ color: "white", minWidth: "40px" }}>
-                {currentSong.dislikes}
+              <Button
+                onClick={() => {
+                  downvoteSong(currentSong._id, connectedUser);
+                }}
+                startIcon={<ThumbDownIcon />}
+                sx={{ color: "white", minWidth: "40px" }}
+              >
+                {currentSong.downvotes}
               </Button>
               <Typography variant="body2" display="flex" alignItems="center">
                 Added by:
-                <Avatar src={currentSong.addedBy} sx={{ width: 24, height: 24, marginLeft: "6px" }} />
+                <Avatar src={currentSong.addedBy.avatar} sx={{ width: 24, height: 24, marginLeft: "6px" }} />
               </Typography>
             </Box>
           </Box>

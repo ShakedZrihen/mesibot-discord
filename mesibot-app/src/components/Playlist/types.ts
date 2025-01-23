@@ -1,10 +1,11 @@
 export interface SongRow {
+  _id: string;
   number: number;
   image: string;
-  name: string;
+  title: string;
   artist: string;
-  addedBy: string;
+  addedBy: { avatar: string; name: string };
   duration: string;
-  likedBy: string[];
-  dislikedBy: string[];
+  upvotes: number;
+  downvotes: number;
 }
