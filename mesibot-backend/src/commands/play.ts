@@ -1,11 +1,5 @@
 import youtubedl from "youtube-dl-exec";
-import {
-  createAudioPlayer,
-  createAudioResource,
-  joinVoiceChannel,
-  AudioPlayerStatus,
-  VoiceConnection
-} from "@discordjs/voice";
+import { createAudioPlayer, createAudioResource, joinVoiceChannel, VoiceConnection } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 

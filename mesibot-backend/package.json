@@ -19,6 +19,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "ffmpeg-static": "^5.2.0",
+    "mongoose": "^8.9.5",
     "tweetnacl": "^1.0.3",
     "ws": "^8.18.0",
     "youtube-dl-exec": "^3.0.13",

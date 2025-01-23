@@ -48,7 +48,11 @@ export const SongRow = (props: SongRowProps) => {
           <ThumbDownIcon fontSize="inherit" />
         </IconButton>
         <Tooltip title={`Added by ${addedBy.name}`}>
-          <Avatar src={addedBy.avatar} sx={{ width: 32, height: 32 }} />
+          <Avatar
+            src={addedBy.avatar}
+            sx={{ width: 32, height: 32 }}
+            slotProps={{ img: { referrerPolicy: "no-referrer" } }}
+          />
         </Tooltip>
       </Box>
     </StyledSongRow>

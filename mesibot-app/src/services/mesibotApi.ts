@@ -1,8 +1,8 @@
 import { Song } from "../types/playlist";
 import axios from "axios";
 
-const BASE_URL = "http://mesibot-be.ngrok.io";
-const PLAYLIST_ID = "6791fbc7af2c84b2749be56d";
+const BASE_URL = "http://localhost:3000";
+const PLAYLIST_ID = "67926c2b408ebe6cf58e7dcd";
 const API_PATHS = {
   songs: "/api/songs",
   addSong: "/api/playlists/add-song",
@@ -20,9 +20,10 @@ export const searchSongs = async (searchTerm: string) => {
 };
 
 export const addSongToPlaylist = async (song: Song, addedBy: { avatar: string; name: string }) => {
+  console.log("🎵 Adding song to playlist:", song);
   const response = await axios.post(`${BASE_URL}${API_PATHS.addSong}`, {
     title: song.title,
-    uri: song.url,
+    url: song.url,
     youtubeId: song.youtubeId,
     addedBy,
     playlistId: PLAYLIST_ID // TODO: make it dynamic
@@ -34,17 +35,20 @@ export const addSongToPlaylist = async (song: Song, addedBy: { avatar: string; n
 export const getPlaylistSongs = async () => {
   try {
     const response = await axios.get(`${BASE_URL}${API_PATHS.playlist}/${PLAYLIST_ID}`);
-    console.log("🎵 Playlist songs:", response.data);
-    return response.data?.songs;
+    return {
+      songs: response.data?.queue.length || response.data?.currentPlaying ? response.data?.queue : response.data?.songs,
+      currentSong: response.data?.currentPlaying ?? null
+    };
   } catch (error) {
     console.error("❌ Error fetching songs:", error);
+    return { songs: [], currentSong: null };
   }
 };
 
 export const upvoteSong = async (songId: string, rateBy: { avatar: string; name: string } | null) => {
   const response = await axios.post(`${BASE_URL}${API_PATHS.playlist}/upvote`, {
     songId,
-    rateBy,
+    userId: rateBy?.avatar,
     playlistId: PLAYLIST_ID
   });
 
@@ -54,7 +58,7 @@ export const upvoteSong = async (songId: string, rateBy: { avatar: string; name:
 export const downvoteSong = async (songId: string, rateBy: { avatar: string; name: string } | null) => {
   const response = await axios.post(`${BASE_URL}${API_PATHS.playlist}/downvote`, {
     songId,
-    rateBy,
+    userId: rateBy?.avatar,
     playlistId: PLAYLIST_ID
   });
 

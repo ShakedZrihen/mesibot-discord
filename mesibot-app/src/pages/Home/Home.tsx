@@ -5,6 +5,7 @@ import { AddSong } from "../../components/AddSongButton";
 import { AddSongModal } from "../../components/AddSongModal/AddSongModal";
 import { useEffect, useState } from "react";
 import { getPlaylistSongs } from "../../services/mesibotApi";
+import { Song } from "../../types/playlist";
 
 const StyledHome = styled("div")`
   height: 100vh;
@@ -21,13 +22,17 @@ export const Home = () => {
   const [currentSong, setCurrentSong] = useState(null);
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      getPlaylistSongs().then((songs) => {
-        setCurrentSong({ ...songs[0], number: 1 });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setSongs(songs.slice(1).map((song: any, index: number) => ({ ...song, number: index + 1 })));
+    const fetchSongs = () =>
+      getPlaylistSongs().then(({ songs, currentSong }) => {
+        if (currentSong) {
+          setCurrentSong({ ...currentSong, number: 1 });
+        }
+        setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
       });
-    }, 1000);
+
+    const intervalId = setInterval(fetchSongs, 3000);
+
+    fetchSongs();
 
     return () => clearInterval(intervalId);
   }, []);

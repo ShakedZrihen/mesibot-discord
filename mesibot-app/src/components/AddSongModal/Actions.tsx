@@ -18,10 +18,7 @@ export const Actions = ({ isMobile, selectedSong, onClose }: ActionsProps) => {
     if (!selectedSong) return;
 
     addSongToPlaylist(selectedSong, { avatar: connectedUser?.avatar ?? "", name: connectedUser?.name ?? "" }).then(
-      () => {
-        console.log("Song Added:", { selectedSong });
-        onClose();
-      }
+      onClose
     );
   }, 500);
 

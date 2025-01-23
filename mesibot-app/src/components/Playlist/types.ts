@@ -8,4 +8,7 @@ export interface SongRow {
   duration: string;
   upvotes: number;
   downvotes: number;
+  upvotedBy: string[];
+  downvotedBy: string[];
+  rank: number;
 }
