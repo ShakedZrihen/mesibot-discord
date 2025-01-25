@@ -12,15 +12,18 @@ const SongSchema = new mongoose.Schema({
   downvotedBy: [{ type: String }]
 });
 
-const PlaylistSchema = new mongoose.Schema({
-  title: String,
-  userId: String,
-  guildId: String,
-  playlistName: String,
-  songs: [SongSchema],
-  currentPlaying: { type: SongSchema, default: null },
-  queue: [SongSchema],
-  played: [SongSchema]
-});
+const PlaylistSchema = new mongoose.Schema(
+  {
+    title: String,
+    userId: String,
+    guildId: String,
+    playlistName: String,
+    songs: [SongSchema],
+    currentPlaying: { type: SongSchema, default: null },
+    queue: [SongSchema],
+    played: [SongSchema]
+  },
+  { versionKey: false }
+);
 
 export const Playlist = mongoose.model("Playlist", PlaylistSchema);

@@ -20,6 +20,7 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
   const [suggestions, setSuggestions] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [, setRecordFile] = useState<File | null>(null);
 
   const fetchSongs = async (searchTerm: string) => {
     if (searchTerm.length < 3) {
@@ -49,6 +50,7 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
         setQuery={setQuery}
         suggestions={suggestions}
         isMobile={isMobile}
+        setRecordFile={setRecordFile}
       />
 
       <Actions isMobile={isMobile} selectedSong={selectedSong} onClose={onClose} />

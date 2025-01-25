@@ -65,20 +65,47 @@ export const play = async ({ req, res }: interactionPayload) => {
  */
 const playSong = async (player: any, playlistId: string, url: string) => {
   try {
-    const audioInfo = (await youtubedl(url, {
+    const videoInfo = (await youtubedl(url, {
       dumpSingleJson: true,
-      format: "bestaudio[ext=webm]",
       noPlaylist: true,
       noCheckCertificates: true,
+      youtubeSkipDashManifest: true,
       addHeader: ["referer:youtube.com", "user-agent:googlebot"]
     })) as any;
 
-    if (!audioInfo || !audioInfo.url) {
-      throw new Error("No valid audio URL found.");
+    if (!videoInfo || !videoInfo.formats) {
+      throw new Error("No valid formats found.");
     }
 
-    const audioResource = createAudioResource(audioInfo.url);
+    // ✅ Pick the lowest quality audio format
+    let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);
+
+    // ✅ If no low-bitrate format is found, fallback to the lowest available audio format
+    if (!selectedFormat) {
+      selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
+    }
+
+    if (!selectedFormat) {
+      throw new Error("No available audio formats.");
+    }
+
+    console.log(`✅ Selected Format: ${selectedFormat.format_id} (${selectedFormat.abr || "unknown"} kbps)`);
+
+    const audioResource = createAudioResource(selectedFormat.url);
+
     player.play(audioResource);
+
+    player.on(AudioPlayerStatus.Playing, () => {
+      console.log("▶️ Audio is playing...");
+    });
+
+    player.on(AudioPlayerStatus.Buffering, () => {
+      console.log("⏳ Audio is buffering...");
+    });
+
+    player.on(AudioPlayerStatus.AutoPaused, () => {
+      console.log("⏸️ Audio is paused due to lack of activity...");
+    });
 
     // ✅ Auto-play next song when the current one finishes
     player.on(AudioPlayerStatus.Idle, async () => {
@@ -94,5 +121,11 @@ const playSong = async (player: any, playlistId: string, url: string) => {
     });
   } catch (error) {
     console.error("❌ Error playing song:", error);
+    const updatedPlaylist = await playlistService.playNext(playlistId);
+    if (updatedPlaylist?.currentPlaying) {
+      playSong(player, playlistId, updatedPlaylist.currentPlaying.url);
+    } else {
+      console.log("🎵 Playlist ended.");
+    }
   }
 };

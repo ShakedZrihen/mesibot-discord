@@ -11,7 +11,7 @@ const getOne = async (id: string) => {
 };
 
 const create = async (title: string) => {
-  const newPlaylist = new Playlist({ title, songs: [] });
+  const newPlaylist = new Playlist({ title, songs: [], queue: [], played: [], currentPlaying: null });
   await newPlaylist.save();
 
   return { title: newPlaylist.title, id: newPlaylist._id };
@@ -134,6 +134,7 @@ const play = async (playlistId: string) => {
     [shuffledSongs[i], shuffledSongs[j]] = [shuffledSongs[j], shuffledSongs[i]];
   }
   playlist.queue = [] as any;
+  playlist.played = [] as any;
 
   // ✅ Move shuffled songs to queue
   playlist.queue.push(...shuffledSongs);
@@ -147,6 +148,7 @@ const play = async (playlistId: string) => {
 
 const playNext = async (playlistId: string) => {
   const playlist = await Playlist.findById(playlistId);
+  console.log({ playlist });
   if (!playlist || !playlist.currentPlaying) {
     return null;
   }

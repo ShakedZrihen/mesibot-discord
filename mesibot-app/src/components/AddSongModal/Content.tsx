@@ -11,6 +11,7 @@ interface ContentProps {
   loading: boolean;
   setRecording: (recording: boolean) => void;
   recording: boolean;
+  setRecordFile: (file: File | null) => void;
 }
 
 export const Content = ({
@@ -21,7 +22,8 @@ export const Content = ({
   setSelectedSong,
   loading,
   setRecording,
-  recording
+  recording,
+  setRecordFile
 }: ContentProps) => {
   return (
     <DialogContent sx={{ paddingBottom: isMobile ? "8px" : "16px" }}>
@@ -30,11 +32,11 @@ export const Content = ({
         freeSolo
         options={suggestions}
         getOptionLabel={(option) => (option as Song).title}
-        onInputChange={(event, newInputValue) => {
+        onInputChange={(_, newInputValue) => {
           setQuery(newInputValue);
           fetchSongs(newInputValue);
         }}
-        onChange={(event, selectedSong) => setSelectedSong(selectedSong as Song)}
+        onChange={(_, selectedSong) => setSelectedSong(selectedSong as Song)}
         loading={loading}
         renderInput={(params) => (
           <TextField
@@ -54,7 +56,7 @@ export const Content = ({
         )}
       />
 
-      <RecordIntro recording={recording} setRecording={setRecording} />
+      <RecordIntro recording={recording} setRecording={setRecording} setRecordFile={setRecordFile} />
     </DialogContent>
   );
 };
