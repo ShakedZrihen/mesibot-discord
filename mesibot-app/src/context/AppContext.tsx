@@ -7,6 +7,8 @@ export interface User {
 
 export interface AppContextType {
   connectedUser: User | null;
+  playlistId: string | null;
+  setPlaylist: (playlistId: string) => void;
   login: (user: User) => void;
   logout: () => void;
 }

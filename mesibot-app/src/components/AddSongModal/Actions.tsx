@@ -13,7 +13,7 @@ interface ActionsProps {
 }
 
 export const Actions = ({ isMobile, selectedSong, recordFile, onClose }: ActionsProps) => {
-  const { connectedUser } = useAppContext();
+  const { connectedUser, playlistId } = useAppContext();
 
   const handleAddSong = async () => {
     if (!selectedSong) {
@@ -27,7 +27,8 @@ export const Actions = ({ isMobile, selectedSong, recordFile, onClose }: Actions
 
     await addSongToPlaylist(
       { song: selectedSong, introUrl: recordUrl },
-      { avatar: connectedUser?.avatar ?? "", name: connectedUser?.name ?? "" }
+      { avatar: connectedUser?.avatar ?? "", name: connectedUser?.name ?? "" },
+      playlistId
     );
 
     onClose();

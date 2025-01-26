@@ -6,6 +6,7 @@ import { AddSongModal } from "../../components/AddSongModal/AddSongModal";
 import { useEffect, useState } from "react";
 import { getPlaylistSongs } from "../../services/mesibotApi";
 import { Song } from "../../types/playlist";
+import { useAppContext } from "../../context/useAppContext";
 
 const StyledHome = styled("div")`
   height: 100vh;
@@ -21,9 +22,15 @@ export const Home = () => {
   const [songs, setSongs] = useState([]);
   const [currentSong, setCurrentSong] = useState(null);
 
+  const { playlistId } = useAppContext();
+
   useEffect(() => {
+    if (!playlistId) {
+      return;
+    }
+
     const fetchSongs = () =>
-      getPlaylistSongs().then(({ songs, currentSong }) => {
+      getPlaylistSongs(playlistId).then(({ songs, currentSong }) => {
         if (currentSong) {
           setCurrentSong({ ...currentSong, number: 1 });
         }
@@ -35,7 +42,7 @@ export const Home = () => {
     fetchSongs();
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [playlistId]);
 
   return (
     <StyledHome>
