@@ -50,7 +50,7 @@ playlistRouter.post("/", async (req, res) => {
 });
 
 playlistRouter.post("/add-song", async (req: Request, res: Response) => {
-  const { title, url, youtubeId, playlistId, addedBy } = req.body;
+  const { title, url, youtubeId, playlistId, addedBy, introUrl } = req.body;
 
   if (!title || !url || !youtubeId || !playlistId || !addedBy) {
     res.status(400).json({ error: "Missing required fields" });
@@ -58,8 +58,8 @@ playlistRouter.post("/add-song", async (req: Request, res: Response) => {
   }
 
   try {
-    const playlist = await playlistService.addSong(title, url, youtubeId, playlistId, addedBy);
-    res.status(201).json({ message: "Song added or upvoted successfully", playlist });
+    const playlist = await playlistService.addSong(title, url, youtubeId, playlistId, addedBy, introUrl);
+    res.status(201).json({ message: "Song added successfully", playlist });
   } catch (error) {
     console.error("Error adding song:", error);
     res.status(500).json({ error: "Internal server error" });

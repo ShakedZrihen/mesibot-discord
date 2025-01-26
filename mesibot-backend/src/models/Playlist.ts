@@ -9,7 +9,8 @@ const SongSchema = new mongoose.Schema({
   downvotes: { type: Number, default: 0 },
   rank: { type: Number, default: 0 },
   upvotedBy: [{ type: String }],
-  downvotedBy: [{ type: String }]
+  downvotedBy: [{ type: String }],
+  introUrl: { type: String, default: null }
 });
 
 const PlaylistSchema = new mongoose.Schema(

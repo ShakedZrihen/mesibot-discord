@@ -5,19 +5,19 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [connectedUser, setConnectedUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       setConnectedUser(JSON.parse(storedUser));
     }
   }, []);
 
   const login = (user: User) => {
-    localStorage.setItem("user", JSON.stringify(user));
+    sessionStorage.setItem("user", JSON.stringify(user));
     setConnectedUser(user);
   };
 
   const logout = () => {
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     setConnectedUser(null);
   };
 

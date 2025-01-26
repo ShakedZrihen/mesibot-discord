@@ -19,14 +19,19 @@ export const searchSongs = async (searchTerm: string) => {
   }
 };
 
-export const addSongToPlaylist = async (song: Song, addedBy: { avatar: string; name: string }) => {
+export const addSongToPlaylist = async (
+  { song, introUrl }: { song: Song; introUrl: string | null },
+  addedBy: { avatar: string; name: string }
+) => {
   console.log("🎵 Adding song to playlist:", song);
+
   const response = await axios.post(`${BASE_URL}${API_PATHS.addSong}`, {
     title: song.title,
     url: song.url,
     youtubeId: song.youtubeId,
     addedBy,
-    playlistId: PLAYLIST_ID // TODO: make it dynamic
+    introUrl,
+    playlistId: PLAYLIST_ID
   });
 
   return response.data;

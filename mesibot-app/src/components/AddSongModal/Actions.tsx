@@ -1,26 +1,37 @@
 import { DialogActions } from "@mui/material";
-import debounce from "lodash.debounce";
 import { StyledButton } from "./AddSongModal.style";
 import { Song } from "../../types/playlist";
 import { addSongToPlaylist } from "../../services/mesibotApi";
 import { useAppContext } from "../../context/useAppContext";
+import { uploadRecording } from "../../services/firebase";
 
 interface ActionsProps {
   isMobile: boolean;
   selectedSong: Song | null;
+  recordFile: File | null;
   onClose: () => void;
 }
 
-export const Actions = ({ isMobile, selectedSong, onClose }: ActionsProps) => {
+export const Actions = ({ isMobile, selectedSong, recordFile, onClose }: ActionsProps) => {
   const { connectedUser } = useAppContext();
 
-  const handleAddSong = debounce(() => {
-    if (!selectedSong) return;
+  const handleAddSong = async () => {
+    if (!selectedSong) {
+      return;
+    }
 
-    addSongToPlaylist(selectedSong, { avatar: connectedUser?.avatar ?? "", name: connectedUser?.name ?? "" }).then(
-      onClose
+    let recordUrl = null;
+    if (recordFile) {
+      recordUrl = await uploadRecording(recordFile);
+    }
+
+    await addSongToPlaylist(
+      { song: selectedSong, introUrl: recordUrl },
+      { avatar: connectedUser?.avatar ?? "", name: connectedUser?.name ?? "" }
     );
-  }, 500);
+
+    onClose();
+  };
 
   return (
     <DialogActions sx={{ padding: isMobile ? "12px" : "16px", marginTop: isMobile ? "-8px" : "0px" }}>

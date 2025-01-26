@@ -5,7 +5,6 @@ import { Login } from "./pages/Login/Login";
 
 function AppContent() {
   const { connectedUser } = useAppContext();
-
   return connectedUser ? <Home /> : <Login />;
 }
 

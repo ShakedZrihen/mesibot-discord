@@ -17,7 +17,14 @@ const create = async (title: string) => {
   return { title: newPlaylist.title, id: newPlaylist._id };
 };
 
-const addSong = async (title: string, url: string, youtubeId: string, playlistId: string, addedBy: string) => {
+const addSong = async (
+  title: string,
+  url: string,
+  youtubeId: string,
+  playlistId: string,
+  addedBy: string,
+  introUrl: string | null
+) => {
   const playlist = await Playlist.findById(playlistId);
 
   if (!playlist) {
@@ -31,8 +38,8 @@ const addSong = async (title: string, url: string, youtubeId: string, playlistId
     existingSongInQueue.upvotes += 1;
     existingSongInQueue.rank = existingSongInQueue.upvotes - existingSongInQueue.downvotes;
   } else {
-    playlist.songs.push({ title, url, youtubeId, upvotes: 0, downvotes: 0, rank: 0, addedBy });
-    playlist.queue.push({ title, url, youtubeId, upvotes: 0, downvotes: 0, rank: 0, addedBy });
+    playlist.songs.push({ title, url, youtubeId, upvotes: 0, downvotes: 0, rank: 0, addedBy, introUrl });
+    playlist.queue.push({ title, url, youtubeId, upvotes: 0, downvotes: 0, rank: 0, addedBy, introUrl });
   }
 
   playlist.songs.sort((a, b) => b.rank - a.rank);

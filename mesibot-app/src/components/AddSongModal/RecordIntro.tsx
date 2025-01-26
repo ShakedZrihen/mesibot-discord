@@ -16,13 +16,59 @@ interface RecordIntroProps {
   setRecordFile: (file: File | null) => void;
 }
 
-export const RecordIntro = ({ recording, setRecordFile }: RecordIntroProps) => {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+export const RecordIntro = ({ recording, setRecording, setRecordFile }: RecordIntroProps) => {
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const audioChunks = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const startRecording = async () => {};
-  const stopRecording = () => {};
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      // ✅ Use webkitAudioContext for Safari (but don't connect to output to prevent echo)
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(audioContext.createGain()); // Do not connect to `destination` (prevents echo)
+
+      mediaRecorder.current = new MediaRecorder(stream, { mimeType: "audio/mp4" });
+
+      mediaRecorder.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.current.onstop = () => {
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/mp4" });
+        const file = new File([audioBlob], `recording-${Date.now()}.mp4`, { type: "audio/mp4" });
+
+        setRecordFile(file);
+        setAudioURL(URL.createObjectURL(audioBlob)); // ✅ Assign audio URL after recording
+        audioChunks.current = [];
+
+        // ✅ Stop all tracks properly
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.current.start();
+      setRecording(true);
+    } catch (error) {
+      console.error("❌ Error starting recording:", error);
+      alert("Failed to start recording. Please allow microphone access.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder.current) {
+      mediaRecorder.current.stop();
+      setRecording(false);
+    }
+  };
 
   const deleteRecording = () => {
     setAudioURL(null);
@@ -44,7 +90,10 @@ export const RecordIntro = ({ recording, setRecordFile }: RecordIntroProps) => {
   return (
     <Box display="flex" alignItems="center" gap={2} marginTop={3}>
       <div
-        onClick={recording ? stopRecording : startRecording} // ✅ Single event for mobile/desktop
+        onTouchStart={startRecording}
+        onTouchEnd={stopRecording}
+        onMouseDown={startRecording}
+        onMouseUp={stopRecording}
       >
         <StyledAvatar recording={recording}>
           <MicIcon width={16} color={recording ? Colors.pink : Colors.black} />
