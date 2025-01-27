@@ -155,7 +155,7 @@ const play = async (playlistId: string) => {
 
 const playNext = async (playlistId: string) => {
   const playlist = await Playlist.findById(playlistId);
-  console.log({ playlist });
+
   if (!playlist || !playlist.currentPlaying) {
     return null;
   }
