@@ -93,15 +93,20 @@ export const RecordIntro = ({ recording, setRecording, setRecordFile }: RecordIn
     audioChunks.current = [];
   };
 
+  const handleClick = () => {
+    if (isMobileDevice) return;
+
+    if (!recording) {
+      startRecording();
+    } else {
+      stopRecording();
+    }
+  };
+
   return (
     <Box display="flex" alignItems="center" gap={2} marginTop={3}>
       {!audioURL && (
-        <div
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
-        >
+        <div onTouchStart={startRecording} onTouchEnd={stopRecording} onClick={handleClick}>
           <StyledAvatar recording={recording}>
             <MicIcon width={16} color={recording ? Colors.pink : Colors.black} />
           </StyledAvatar>
