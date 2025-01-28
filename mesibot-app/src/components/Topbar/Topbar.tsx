@@ -12,6 +12,9 @@ const StyledAppBar = styled(AppBar)`
   display: flex;
   justify-content: space-between;
   padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 `;
 
 export const Topbar = () => {

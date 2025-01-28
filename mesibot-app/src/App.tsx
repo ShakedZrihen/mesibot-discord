@@ -11,11 +11,18 @@ function AppContent() {
 
 function App() {
   useEffect(() => {
-    // document.body.style.overflow = "hidden"; // ✅ Disable scrolling on the whole page
-    // document.documentElement.style.overflow = "hidden"; // ✅ Ensure it works on iOS Safari
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.position = "fixed";
+    document.documentElement.style.width = "100%";
+    document.documentElement.style.height = "100%";
+    
     return () => {
-      document.body.style.overflow = "auto"; // ✅ Restore scrolling when unmounting
-      document.documentElement.style.overflow = "auto"; // ✅ Restore on unmount
+      document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "auto";
+      document.documentElement.style.position = "static";
+      document.documentElement.style.width = "auto";
+      document.documentElement.style.height = "auto";
     };
   }, []);
 

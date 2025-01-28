@@ -16,6 +16,24 @@ export const SongRow = (props: SongRowProps) => {
   const { connectedUser, playlistId } = useAppContext();
   const { number, title, addedBy, _id } = props;
 
+  const formatTitle = (title: string) => {
+    const pipeIndex = title.indexOf("|");
+    const parenthesisIndex = title.indexOf("(");
+
+    if (pipeIndex === -1 && parenthesisIndex === -1) {
+      return title;
+    }
+
+    if (pipeIndex === -1) {
+      return title.substring(0, parenthesisIndex).trim();
+    }
+    if (parenthesisIndex === -1) {
+      return title.substring(0, pipeIndex).trim();
+    }
+
+    return title.substring(0, Math.min(pipeIndex, parenthesisIndex)).trim();
+  };
+
   return (
     <StyledSongRow>
       <Box display="flex" alignItems="center" gap={2}>
@@ -23,7 +41,7 @@ export const SongRow = (props: SongRowProps) => {
           {number}
         </Typography>
         <Box>
-          <Typography variant="body1">{title}</Typography>
+          <Typography variant="body1">{formatTitle(title)}</Typography>
         </Box>
       </Box>
 
