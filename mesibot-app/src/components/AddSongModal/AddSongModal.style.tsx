@@ -25,10 +25,7 @@ export const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
 export const StyledAvatar = styled(Avatar)<{ recording: boolean }>(({ recording }) => ({
   backgroundColor: Colors.white,
   border: `1px solid ${recording ? Colors.pink : Colors.black}`,
-  cursor: "pointer",
-  "&:hover": {
-    borderColor: Colors.pink
-  }
+  cursor: "pointer"
 }));
 
 export const StyledButton = styled(Button)({
