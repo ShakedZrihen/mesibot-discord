@@ -1,12 +1,15 @@
 import { Playlist } from "../../models/Playlist";
+import { wsManager } from "../../index";
 
 const getAll = async () => {
   const playlists = await Playlist.find().select("title _id");
+  
   return playlists;
 };
 
 const getOne = async (id: string) => {
   const playlist = await Playlist.findById(id);
+  
   return playlist;
 };
 
@@ -47,16 +50,20 @@ const addSong = async (
 
   await playlist.save();
 
+  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
+
   return playlist;
 };
 
 const upvoteSong = async (playlistId: string, songId: string, userId: string) => {
   const playlist = await Playlist.findById(playlistId);
+  
   if (!playlist) {
     return;
   }
 
   const song = playlist.queue.id(songId);
+  
   if (!song) {
     return;
   }
@@ -83,6 +90,7 @@ const upvoteSong = async (playlistId: string, songId: string, userId: string) =>
   playlist.queue = playlist.queue.sort((a, b) => b.rank - a.rank);
 
   await playlist.save();
+  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
 
   return playlist;
 };
@@ -120,6 +128,7 @@ const downvoteSong = async (playlistId: string, songId: string, userId: string) 
   playlist.queue = playlist.queue.sort((a, b) => b.rank - a.rank);
 
   await playlist.save();
+  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
 
   return playlist;
 };
@@ -136,20 +145,23 @@ const play = async (playlistId: string) => {
 
   // ✅ Shuffle songs (Fisher-Yates Shuffle)
   const shuffledSongs = [...playlist.songs];
+  
   for (let i = shuffledSongs.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffledSongs[i], shuffledSongs[j]] = [shuffledSongs[j], shuffledSongs[i]];
   }
+  
   playlist.queue = [] as any;
   playlist.played = [] as any;
 
-  // ✅ Move shuffled songs to queue
+  // Move shuffled songs to queue
   playlist.queue.push(...shuffledSongs);
 
-  // ✅ Set first song as `currentPlaying`
+  // Set first song as `currentPlaying`
   playlist.currentPlaying = playlist.queue.shift() || null;
 
   await playlist.save();
+
   return playlist;
 };
 
@@ -167,11 +179,13 @@ const playNext = async (playlistId: string) => {
   playlist.currentPlaying = playlist.queue.shift() || null;
 
   await playlist.save();
+  
   return playlist;
 };
 
 const reset = async (playlistId: string) => {
   const playlist = await Playlist.findById(playlistId);
+  
   if (!playlist) {
     return null;
   }
@@ -185,11 +199,13 @@ const reset = async (playlistId: string) => {
   });
 
   await playlist.save();
+ 
   return playlist;
 };
 
 const clear = async (playlistId: string) => {
   const playlist = await Playlist.findById(playlistId);
+  
   if (!playlist) {
     return null;
   }
@@ -197,6 +213,7 @@ const clear = async (playlistId: string) => {
   playlist.queue = [] as any;
 
   await playlist.save();
+  
   return playlist;
 };
 

@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Topbar } from "../../components/Topbar";
 import { styled } from "@mui/material";
 import { Playlist } from "../../components/Playlist";
 import { AddSong } from "../../components/AddSongButton";
 import { AddSongModal } from "../../components/AddSongModal/AddSongModal";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getPlaylistSongs } from "../../services/mesibotApi";
 import { Song } from "../../types/playlist";
 import { useAppContext } from "../../context/useAppContext";
+import { WebSocketService } from "../../services/websocketService";
 
 const StyledHome = styled("div")`
   height: 100vh;
@@ -21,8 +23,9 @@ const StyledHome = styled("div")`
 
 export const Home = () => {
   const [openModal, setOpenModal] = useState(false);
-  const [songs, setSongs] = useState([]);
-  const [currentSong, setCurrentSong] = useState(null);
+  const [songs, setSongs] = useState<any[]>([]);
+  const [currentSong, setCurrentSong] = useState<any | null>(null);
+  const wsRef = useRef<WebSocketService | null>(null);
 
   const { playlistId } = useAppContext();
 
@@ -31,19 +34,26 @@ export const Home = () => {
       return;
     }
 
-    const fetchSongs = () =>
-      getPlaylistSongs(playlistId).then(({ songs, currentSong }) => {
-        if (currentSong) {
-          setCurrentSong({ ...currentSong, number: 1 });
-        }
-        setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
-      });
+    // Initial fetch
+    getPlaylistSongs(playlistId).then(({ songs, currentSong }) => {
+      if (currentSong) {
+        setCurrentSong({ ...currentSong, number: 1 });
+      }
+      setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
+    });
 
-    const intervalId = setInterval(fetchSongs, 3000);
+    // Setup WebSocket connection
+    wsRef.current = new WebSocketService(playlistId, ({ songs, currentSong }) => {
+      if (currentSong) {
+        setCurrentSong({ ...currentSong, number: 1 });
+      }
+      setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
+    });
 
-    fetchSongs();
-
-    return () => clearInterval(intervalId);
+    // Cleanup WebSocket on unmount
+    return () => {
+      wsRef.current?.disconnect();
+    };
   }, [playlistId]);
 
   return (
