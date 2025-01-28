@@ -94,7 +94,9 @@ export const RecordIntro = ({ recording, setRecording, setRecordFile }: RecordIn
   };
 
   const handleClick = () => {
-    if (isMobileDevice) return;
+    if (isMobileDevice) {
+      return;
+    }
 
     if (!recording) {
       startRecording();
