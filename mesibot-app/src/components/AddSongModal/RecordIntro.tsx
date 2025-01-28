@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import { Colors } from "../../consts/colors";
 import { StyledAvatar } from "./AddSongModal.style";
 import MicIcon from "../../assets/micIcon.svg?react";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ReactAudioPlayer from "react-audio-player";
 
-const MIME_TYPE = "audio/mp4";
+const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+console.log({ isMobileDevice });
+const MIME_TYPE = isMobileDevice ? "audio/mp4" : "audio/webm"; // ✅ Use webm instead of mp4
+const FILE_EXTENSION = isMobileDevice ? ".mp4" : ".webm";
 
 interface RecordIntroProps {
   recording: boolean;
@@ -19,17 +21,29 @@ export const RecordIntro = ({ recording, setRecording, setRecordFile }: RecordIn
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const [audioURL, setAudioURL] = useState<string | null>(null);
+  const stream = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    const askPermissions = async () => {
+      try {
+        stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log("✅ Microphone access granted");
+      } catch (error) {
+        console.error("❌ Microphone access denied or error occurred:", error);
+        alert("Please allow microphone access to record.");
+      }
+    };
+
+    askPermissions();
+  }, []);
 
   const startRecording = async () => {
+    if (!stream.current) {
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(audioContext.createGain());
-
-      mediaRecorder.current = new MediaRecorder(stream, { mimeType: MIME_TYPE });
+      mediaRecorder.current = new MediaRecorder(stream.current, { mimeType: MIME_TYPE });
 
       mediaRecorder.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -38,16 +52,20 @@ export const RecordIntro = ({ recording, setRecording, setRecordFile }: RecordIn
       };
 
       mediaRecorder.current.onstop = () => {
+        if (audioChunks.current.length === 0 || !stream.current) {
+          console.error("❌ No audio data was recorded!");
+          return;
+        }
+
         console.log("Stopping recording...");
         const audioBlob = new Blob(audioChunks.current, { type: MIME_TYPE });
-        const file = new File([audioBlob], `recording-${Date.now()}.mp3`, { type: MIME_TYPE });
+        const file = new File([audioBlob], `recording-${Date.now()}${FILE_EXTENSION}`, { type: MIME_TYPE });
 
         setRecordFile(file);
         setAudioURL(URL.createObjectURL(audioBlob));
         audioChunks.current = [];
 
-        // ✅ Stop all tracks properly
-        stream.getTracks().forEach((track) => track.stop());
+        stream.current.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.current.start();
@@ -66,14 +84,12 @@ export const RecordIntro = ({ recording, setRecording, setRecordFile }: RecordIn
   };
 
   const deleteRecording = () => {
+    if (audioURL) {
+      URL.revokeObjectURL(audioURL); // ✅ Properly remove the Blob URL
+    }
     setAudioURL(null);
     setRecordFile(null);
     setRecording(false);
-
-    if (mediaRecorder.current) {
-      mediaRecorder.current = null;
-    }
-
     audioChunks.current = [];
   };
 
@@ -97,7 +113,9 @@ export const RecordIntro = ({ recording, setRecording, setRecordFile }: RecordIn
           <IconButton onClick={deleteRecording} color="error">
             <DeleteIcon />
           </IconButton>
-          <ReactAudioPlayer src={audioURL} controls style={{ backgroundColor: "transparent" }} />
+
+          {/* ✅ Debug with native <audio> before ReactAudioPlayer */}
+          <audio key={audioURL} src={audioURL} controls />
         </Box>
       )}
 
