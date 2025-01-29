@@ -4,20 +4,20 @@ import { StatisticsService } from "../statistics/statistics";
 
 const getAll = async () => {
   const playlists = await Playlist.find().select("title _id");
-  
+
   return playlists;
 };
 
 const getOne = async (id: string) => {
   const playlist = await Playlist.findById(id);
-  
+
   return playlist;
 };
 
 const create = async (title: string) => {
   const newPlaylist = new Playlist({ title, songs: [], queue: [], played: [], currentPlaying: null });
   await newPlaylist.save();
-  await StatisticsService.create(newPlaylist._id.toString())
+  await StatisticsService.create(newPlaylist._id.toString());
   return { title: newPlaylist.title, id: newPlaylist._id };
 };
 
@@ -48,23 +48,22 @@ const addSong = async (
 
   playlist.songs.sort((a, b) => b.rank - a.rank);
   playlist.queue.sort((a, b) => b.rank - a.rank);
+  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
 
   await playlist.save();
-
-  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
 
   return playlist;
 };
 
 const upvoteSong = async (playlistId: string, songId: string, userId: string) => {
   const playlist = await Playlist.findById(playlistId);
-  
+
   if (!playlist) {
     return;
   }
 
   const song = playlist.queue.id(songId);
-  
+
   if (!song) {
     return;
   }
@@ -74,20 +73,14 @@ const upvoteSong = async (playlistId: string, songId: string, userId: string) =>
     return;
   }
 
-  // Remove user from downvotedBy if they previously downvoted
-
-  await StatisticsService.upVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
-  
-
   if (song.downvotedBy.includes(userId)) {
     song.downvotes -= 1;
     song.downvotedBy = song.downvotedBy.filter((id) => id !== userId);
   }
-  
+
   // Add upvote
   song.upvotes += 1;
   song.upvotedBy.push(userId);
-  
 
   // Update song rank
   song.rank = song.upvotes - song.downvotes;
@@ -95,8 +88,10 @@ const upvoteSong = async (playlistId: string, songId: string, userId: string) =>
   // Sort queue after ranking change
   playlist.queue = playlist.queue.sort((a, b) => b.rank - a.rank);
 
-  await playlist.save();
   wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
+
+  await playlist.save();
+  await StatisticsService.upVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
 
   return playlist;
 };
@@ -105,22 +100,20 @@ const downvoteSong = async (playlistId: string, songId: string, userId: string) 
   const playlist = await Playlist.findById(playlistId);
   if (!playlist) {
     console.log("(Playlists) No playlist");
-    return 
+    return;
   }
 
   const song = playlist.queue.id(songId);
   if (!song) {
     console.log("(Playlists) No song found");
-    return
+    return;
   }
 
   // Check if the user has already downvoted
   if (song.downvotedBy.includes(userId)) {
     console.log("(Playlists) Already downvoted");
-    return 
+    return;
   }
-  
-  await StatisticsService.downVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
 
   // Remove user from upvotedBy if they previously upvoted
   if (song.upvotedBy.includes(userId)) {
@@ -132,15 +125,16 @@ const downvoteSong = async (playlistId: string, songId: string, userId: string) 
   song.downvotes += 1;
   song.downvotedBy.push(userId);
 
-  
   // Update song rank
   song.rank = song.upvotes - song.downvotes;
 
   // Sort queue after ranking change
   playlist.queue = playlist.queue.sort((a, b) => b.rank - a.rank);
 
-  await playlist.save();
   wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
+
+  await playlist.save();
+  await StatisticsService.downVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
 
   return playlist;
 };
@@ -157,12 +151,12 @@ const play = async (playlistId: string) => {
 
   // ✅ Shuffle songs (Fisher-Yates Shuffle)
   const shuffledSongs = [...playlist.songs];
-  
+
   for (let i = shuffledSongs.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffledSongs[i], shuffledSongs[j]] = [shuffledSongs[j], shuffledSongs[i]];
   }
-  
+
   playlist.queue = [] as any;
   playlist.played = [] as any;
 
@@ -191,13 +185,13 @@ const playNext = async (playlistId: string) => {
   playlist.currentPlaying = playlist.queue.shift() || null;
 
   await playlist.save();
-  
+
   return playlist;
 };
 
 const reset = async (playlistId: string) => {
   const playlist = await Playlist.findById(playlistId);
-  
+
   if (!playlist) {
     return null;
   }
@@ -211,13 +205,13 @@ const reset = async (playlistId: string) => {
   });
 
   await playlist.save();
- 
+
   return playlist;
 };
 
 const clear = async (playlistId: string) => {
   const playlist = await Playlist.findById(playlistId);
-  
+
   if (!playlist) {
     return null;
   }
@@ -225,7 +219,7 @@ const clear = async (playlistId: string) => {
   playlist.queue = [] as any;
 
   await playlist.save();
-  
+
   return playlist;
 };
 

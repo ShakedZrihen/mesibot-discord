@@ -9,6 +9,7 @@ export const formatSongName = (title: string) => {
   if (pipeIndex === -1) {
     return title.substring(0, parenthesisIndex).trim();
   }
+  
   if (parenthesisIndex === -1) {
     return title.substring(0, pipeIndex).trim();
   }

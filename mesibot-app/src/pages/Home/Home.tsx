@@ -29,26 +29,24 @@ export const Home = () => {
 
   const { playlistId } = useAppContext();
 
+  const updateSongs = ({ currentSong, songs }: { currentSong: Song | null; songs: Song[] }) => {
+    if (currentSong) {
+      setCurrentSong({ ...currentSong, number: 1 });
+    }
+
+    setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
+  };
+
   useEffect(() => {
     if (!playlistId) {
       return;
     }
 
     // Initial fetch
-    getPlaylistSongs(playlistId).then(({ songs, currentSong }) => {
-      if (currentSong) {
-        setCurrentSong({ ...currentSong, number: 1 });
-      }
-      setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
-    });
+    getPlaylistSongs(playlistId).then(updateSongs);
 
     // Setup WebSocket connection
-    wsRef.current = new WebSocketService(playlistId, ({ songs, currentSong }) => {
-      if (currentSong) {
-        setCurrentSong({ ...currentSong, number: 1 });
-      }
-      setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
-    });
+    wsRef.current = new WebSocketService(playlistId, updateSongs);
 
     // Cleanup WebSocket on unmount
     return () => {
