@@ -6,30 +6,35 @@ import { DISCORD_TOKEN } from "./env";
 import { interactionsRouter } from "./controllers/interactions";
 import { apiRouter } from "./controllers/api";
 import { initServerPrerequisites } from "./init";
+import http from "http";
+import WebSocketManager from "./websocket";
 
 const app = express();
 const PORT = 3000;
 
+// Create HTTP server
+const server = http.createServer(app);
+// Initialize WebSocket manager
+export const wsManager = new WebSocketManager(server);
+
 app.use(cors());
 
 initServerPrerequisites().then(() => {
-  // ✅ Middleware to store raw body before JSON parsing
   app.use(
     express.json({
       verify: (req: any, res, buf) => {
-        (req as any).rawBody = buf; // Assign raw body without breaking TypeScript
+        (req as any).rawBody = buf;
       }
     })
   );
 
   app.use("/api", apiRouter);
-
-  // Handle Discord interactions
   app.use("/interactions", verifyDiscordRequest, interactionsRouter);
 
-  // Start Express server
-  app.listen(PORT, () => {
+  // Use server.listen instead of app.listen
+  server.listen(PORT, () => {
     console.log(`🌍 Web server running at http://localhost:${PORT}`);
+    console.log(`🔌 WebSocket server is running`);
   });
 
   client.once("ready", () => {
