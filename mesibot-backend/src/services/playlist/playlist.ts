@@ -1,5 +1,6 @@
 import { Playlist } from "../../models/Playlist";
 import { wsManager } from "../../index";
+import { StatisticsService } from "../statistics/statistics";
 
 const getAll = async () => {
   const playlists = await Playlist.find().select("title _id");
@@ -16,7 +17,7 @@ const getOne = async (id: string) => {
 const create = async (title: string) => {
   const newPlaylist = new Playlist({ title, songs: [], queue: [], played: [], currentPlaying: null });
   await newPlaylist.save();
-
+  await StatisticsService.create(newPlaylist._id.toString())
   return { title: newPlaylist.title, id: newPlaylist._id };
 };
 
@@ -74,14 +75,19 @@ const upvoteSong = async (playlistId: string, songId: string, userId: string) =>
   }
 
   // Remove user from downvotedBy if they previously downvoted
+
+  await StatisticsService.upVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
+  
+
   if (song.downvotedBy.includes(userId)) {
     song.downvotes -= 1;
     song.downvotedBy = song.downvotedBy.filter((id) => id !== userId);
   }
-
+  
   // Add upvote
   song.upvotes += 1;
   song.upvotedBy.push(userId);
+  
 
   // Update song rank
   song.rank = song.upvotes - song.downvotes;
@@ -98,18 +104,23 @@ const upvoteSong = async (playlistId: string, songId: string, userId: string) =>
 const downvoteSong = async (playlistId: string, songId: string, userId: string) => {
   const playlist = await Playlist.findById(playlistId);
   if (!playlist) {
-    return;
+    console.log("(Playlists) No playlist");
+    return 
   }
 
   const song = playlist.queue.id(songId);
   if (!song) {
-    return;
+    console.log("(Playlists) No song found");
+    return
   }
 
   // Check if the user has already downvoted
   if (song.downvotedBy.includes(userId)) {
-    return;
+    console.log("(Playlists) Already downvoted");
+    return 
   }
+  
+  await StatisticsService.downVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
 
   // Remove user from upvotedBy if they previously upvoted
   if (song.upvotedBy.includes(userId)) {
@@ -121,6 +132,7 @@ const downvoteSong = async (playlistId: string, songId: string, userId: string) 
   song.downvotes += 1;
   song.downvotedBy.push(userId);
 
+  
   // Update song rank
   song.rank = song.upvotes - song.downvotes;
 
