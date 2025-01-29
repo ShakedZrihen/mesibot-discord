@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BrowserRouter } from "react-router-dom";
 import { AppProvider } from "./context/AppProvider";
 import { useAppContext } from "./context/useAppContext";
 import { Home } from "./pages/Home/Home";
@@ -27,9 +28,11 @@ function App() {
   }, []);
 
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <BrowserRouter>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </BrowserRouter>
   );
 }
 

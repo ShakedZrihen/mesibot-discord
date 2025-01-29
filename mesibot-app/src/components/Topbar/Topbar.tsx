@@ -5,6 +5,7 @@ import MesibotIcon from "../../assets/mesibot.svg?react";
 import { Colors, MESIBOT_GRADIENT } from "../../consts/colors";
 import { useAppContext } from "../../context/useAppContext";
 import { getAvailablePlaylists } from "../../services/mesibotApi";
+import { StyledLogoContainer, StyledSubtitle } from "./Topbar.style";
 
 const StyledAppBar = styled(AppBar)`
   background: ${MESIBOT_GRADIENT};
@@ -17,7 +18,12 @@ const StyledAppBar = styled(AppBar)`
   z-index: 1000;
 `;
 
-export const Topbar = () => {
+interface TopbarProps {
+  subtitle?: string;
+  showPlaylistPicker?: boolean;
+}
+
+export const Topbar = ({ subtitle, showPlaylistPicker }: TopbarProps) => {
   const { setPlaylist, playlistId, connectedUser } = useAppContext(); // ✅ Context
   const [playlists, setPlaylists] = useState<{ title: string; id: string }[]>([]);
 
@@ -42,8 +48,10 @@ export const Topbar = () => {
   return (
     <StyledAppBar position="static">
       <Toolbar>
-        <MesibotIcon />
-        {connectedUser && (
+        <StyledLogoContainer>
+          <MesibotIcon /> {subtitle && <StyledSubtitle>{subtitle}</StyledSubtitle>}
+        </StyledLogoContainer>
+        {connectedUser && showPlaylistPicker && (
           <FormControl variant="standard" sx={{ minWidth: "15vw", marginLeft: "auto" }}>
             <Select
               value={playlistId || ""} // ✅ Ensure controlled component
