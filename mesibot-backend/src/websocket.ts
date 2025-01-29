@@ -58,7 +58,9 @@ class WebSocketManager {
 
   public notifyPlaylistUpdate(playlistId: string, songs: any[], currentSong: any | null) {
     const connections = this.playlistConnections.get(playlistId);
-    if (!connections) return;
+    if (!connections) {
+      return;
+    }
 
     const update: PlaylistUpdate = {
       type: "playlistUpdate",

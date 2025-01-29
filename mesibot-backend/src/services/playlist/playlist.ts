@@ -48,9 +48,10 @@ const addSong = async (
 
   playlist.songs.sort((a, b) => b.rank - a.rank);
   playlist.queue.sort((a, b) => b.rank - a.rank);
-  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
 
   await playlist.save();
+  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
+
 
   return playlist;
 };
@@ -88,9 +89,9 @@ const upvoteSong = async (playlistId: string, songId: string, userId: string) =>
   // Sort queue after ranking change
   playlist.queue = playlist.queue.sort((a, b) => b.rank - a.rank);
 
-  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
 
   await playlist.save();
+  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
   await StatisticsService.upVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
 
   return playlist;
@@ -131,9 +132,9 @@ const downvoteSong = async (playlistId: string, songId: string, userId: string) 
   // Sort queue after ranking change
   playlist.queue = playlist.queue.sort((a, b) => b.rank - a.rank);
 
-  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
 
   await playlist.save();
+  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
   await StatisticsService.downVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
 
   return playlist;
