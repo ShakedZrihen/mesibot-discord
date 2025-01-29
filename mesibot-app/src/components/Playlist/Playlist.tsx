@@ -6,6 +6,7 @@ import { SongRow as SongRowType } from "./types";
 import { Colors } from "../../consts/colors";
 import { downvoteSong, upvoteSong } from "../../services/mesibotApi";
 import { useAppContext } from "../../context/useAppContext";
+import { formatSongName } from "../../utils/formatSongName";
 
 interface PlaylistProps {
   currentSong: SongRowType | null;
@@ -16,15 +17,17 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
   const { connectedUser, playlistId } = useAppContext();
 
   return (
-    <Box sx={{ 
-      margin: { xs: "1rem", sm: "2rem" },
-      marginBottom: { xs: "5rem", sm: "2rem" }, // Added extra margin for mobile to see last song
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      height: 'calc(100vh - 64px)' // Subtract the height of Topbar
-    }}>
+    <Box
+      sx={{
+        margin: { xs: "1rem", sm: "2rem" },
+        marginBottom: { xs: "5rem", sm: "2rem" }, // Added extra margin for mobile to see last song
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        height: "calc(100vh - 64px)" // Subtract the height of Topbar
+      }}
+    >
       {currentSong && (
         <Box
           sx={{
@@ -37,7 +40,7 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
         >
           <Box display="flex" alignItems="center" gap={2}>
             <Box>
-              <Typography variant="h6">{currentSong.title}</Typography>
+              <Typography variant="h6">{formatSongName(currentSong.title)}</Typography>
               {/* <Typography variant="body2" color="gray">
               {currentSong.artist}
             </Typography> */}
@@ -73,12 +76,14 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
           </Box>
         </Box>
       )}
-      <Box sx={{ 
-        overflowY: "auto",
-        flex: 1,
-        WebkitOverflowScrolling: "touch",
-        paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
-      }}>
+      <Box
+        sx={{
+          overflowY: "auto",
+          flex: 1,
+          WebkitOverflowScrolling: "touch",
+          paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
+        }}
+      >
         {songs.map((song) => (
           <SongRow key={song.number} {...song} />
         ))}
