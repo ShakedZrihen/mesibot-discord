@@ -1,0 +1,8 @@
+curl -X POST http://localhost:3000/api/playlists/upvote ^
+-H "Content-Type: application/json" ^
+-d "{ \"playlistId\": \"67926c2b408ebe6cf58e7dcd\", \"songId\": \"679680e0ee8d890c5615fe28\", \"userId\": \"Shaki\" }"
+
+
+curl -X POST http://localhost:3000/api/playlists/downvote ^
+-H "Content-Type: application/json" ^
+-d "{ \"playlistId\": \"67926c2b408ebe6cf58e7dcd\", \"songId\": \"679680e0ee8d890c5615fe28\", \"userId\": \"Shaki\" }"
