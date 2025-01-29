@@ -96,17 +96,20 @@ const upvoteSong = async (playlistId: string, songId: string, userId: string) =>
 const downvoteSong = async (playlistId: string, songId: string, userId: string) => {
   const playlist = await Playlist.findById(playlistId);
   if (!playlist) {
-    return console.log("(Playlists) No playlist");
+    console.log("(Playlists) No playlist");
+    return 
   }
 
   const song = playlist.queue.id(songId);
   if (!song) {
-    return console.log("(Playlists) No song found");
+    console.log("(Playlists) No song found");
+    return
   }
 
   // Check if the user has already downvoted
   if (song.downvotedBy.includes(userId)) {
-    return console.log("(Playlists) Already downvoted");
+    console.log("(Playlists) Already downvoted");
+    return 
   }
   
   await StatisticsService.downVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
