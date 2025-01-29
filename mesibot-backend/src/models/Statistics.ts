@@ -11,7 +11,8 @@ const StatisticSchema = new mongoose.Schema({
           name: String,
           avatar: String,
           songsAdded: { type: Number, default: 0 }
-        }
+        },
+        default: () => new Map()
     },
 
     // 2️⃣ Most Popular Curators: Users whose songs got the most upvotes
@@ -21,7 +22,8 @@ const StatisticSchema = new mongoose.Schema({
             name: String,
             avatar: String,
             totalLikes: { type: Number, default: 0 }
-        }
+        },
+        default: () => new Map()
     },
 
     // 3️⃣ Least Popular Curators: Users whose songs got the most downvotes
@@ -31,7 +33,8 @@ const StatisticSchema = new mongoose.Schema({
           name: String,
           avatar: String,
           totalDislikes: { type: Number, default: 0 }
-        }
+        },
+        default: () => new Map()
     },
 
     // 4️⃣ Most Liked Songs: Tracks with the highest upvotes
@@ -42,7 +45,8 @@ const StatisticSchema = new mongoose.Schema({
           addedBy: String, // userId of the curator
           upvotes: { type: Number, default: 0 },
           downvotes: { type: Number, default: 0 }
-        }
+        },
+        default: () => new Map()
     },
 
     // 5️⃣ Most Disliked Songs: Tracks with the highest downvotes
@@ -53,7 +57,8 @@ const StatisticSchema = new mongoose.Schema({
           addedBy: String, // userId of the curator
           upvotes: { type: Number, default: 0 },
           downvotes: { type: Number, default: 0 }
-        }
+        },
+        default: () => new Map()
     }
 
 }, { timestamps: true });

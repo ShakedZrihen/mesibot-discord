@@ -1,7 +1,6 @@
 import { Statistics } from "../../models/Statistics";
 import { Playlist } from "../../models/Playlist";
 import { Types } from "mongoose"
-// import { StatisticsService } from "../statistics/statistics";
 
 const create = async (pid: string) => {
     const playlistId = new Types.ObjectId(pid);
@@ -13,20 +12,16 @@ const create = async (pid: string) => {
         mostLikedSongs: new Map(),
         mostDislikedSongs: new Map()
     });
-    await newPlaylistStatistic.save();
+
+    return await newPlaylistStatistic.save();
 }
 
 const addSong = async (pid: string, userId: string, addedBy: { name: string; avatar: string }) => {
     const playlistId = new Types.ObjectId(pid);
     let PlaylistStatistics = await Statistics.findOne({ playlistId: playlistId });
 
-    if (!PlaylistStatistics) {
-        await create(pid);
-        return await addSong(pid, userId, addedBy);
-    }
-
-    if (!PlaylistStatistics.topContributors) 
-        PlaylistStatistics.topContributors = new Map();
+    if (!PlaylistStatistics) 
+        PlaylistStatistics = await create(pid);
 
     const userStats = PlaylistStatistics.topContributors.get(userId);
 
@@ -49,31 +44,20 @@ const upVote = async (pid: string, songId: string, userId: string, upvotedBy: st
     const playlistId = new Types.ObjectId(pid);
     let PlaylistStatistics = await Statistics.findOne({ playlistId: playlistId });
 
-    if (!PlaylistStatistics) {
-        await create(pid);
-        return await upVote(pid, songId, userId, upvotedBy, downvotedBy);
-    }
-
-    console.log("upvotedBy", upvotedBy)
-    console.log("downvotedBy", downvotedBy)
-
-    if (!PlaylistStatistics.mostPopularCurators) 
-        PlaylistStatistics.mostPopularCurators = new Map();
-
-    if (!PlaylistStatistics.mostLikedSongs) 
-        PlaylistStatistics.mostLikedSongs = new Map();
-
-    if (!PlaylistStatistics.leastPopularCurators) 
-        PlaylistStatistics.leastPopularCurators = new Map();
-
-    if (!PlaylistStatistics.mostDislikedSongs) 
-        PlaylistStatistics.mostDislikedSongs = new Map();
+    if (!PlaylistStatistics) 
+        PlaylistStatistics = await create(pid);
 
     const playlist = await Playlist.findById(playlistId);
-    if (!playlist) return console.log("(Statistics) Playlist not found");
+    if (!playlist) {
+        console.log("(Statistics) Playlist not found");
+        return;
+    }
 
     const song = playlist.queue.id(songId);
-    if (!song || !song.addedBy || !song.addedBy.name) return console.log("(Statistics) Song Not Found!");
+    if (!song || !song.addedBy || !song.addedBy.name) {
+        console.log("(Statistics) Song Not Found!");
+        return
+    }
 
     const curatorId = song.addedBy.name;
 
@@ -151,32 +135,20 @@ const downVote = async (pid: string, songId: string, userId: string, upvotedBy: 
     const playlistId = new Types.ObjectId(pid);
     let PlaylistStatistics = await Statistics.findOne({ playlistId: playlistId });
 
-    console.log("upvotedBy", upvotedBy)
-    console.log("downvotedBy", downvotedBy)
-
-    if (!PlaylistStatistics) {
-        await create(pid);
-        return await downVote(pid, songId, userId, upvotedBy, downvotedBy);
-    }
-
-    if (!PlaylistStatistics.mostPopularCurators) 
-        PlaylistStatistics.mostPopularCurators = new Map();
-
-    if (!PlaylistStatistics.mostLikedSongs) 
-        PlaylistStatistics.mostLikedSongs = new Map();
-
-    if (!PlaylistStatistics.leastPopularCurators) 
-        PlaylistStatistics.leastPopularCurators = new Map();
-
-    if (!PlaylistStatistics.mostDislikedSongs) 
-        PlaylistStatistics.mostDislikedSongs = new Map();
-
+    if (!PlaylistStatistics) 
+        PlaylistStatistics = await create(pid);
 
     const playlist = await Playlist.findById(playlistId);
-    if (!playlist) return console.log("(Statistics) Playlist not found");
+    if (!playlist) { 
+        console.log("(Statistics) Playlist not found");
+        return 
+    }
 
     const song = playlist.queue.id(songId);
-    if (!song || !song.addedBy || !song.addedBy.name) return console.log("(Statistics) Song Not Found!");
+    if (!song || !song.addedBy || !song.addedBy.name) {
+        console.log("(Statistics) Song Not Found!");
+        return 
+    }
 
     const curatorId = song.addedBy.name;
     const mostPopularCurators = PlaylistStatistics.mostPopularCurators.get(curatorId);
@@ -248,31 +220,6 @@ const downVote = async (pid: string, songId: string, userId: string, upvotedBy: 
     await playlist.save();
     console.log("Updated PlaylistStatistics:", PlaylistStatistics);
 };
-
-//Change The Functions to Add/Remove
-
-
-// Statistics.findOneAndDelete({ playlistId: "67926c2b408ebe6cf58e7dcd" }).then(async (statistics) => {
-//     console.log("Deleted Statistic")
-// })
-
-
-Statistics.findOne({ playlistId: "67926c2b408ebe6cf58e7dcd" }).then(async (statistics) => {
-    if(!statistics) {
-        console.log("(Statistics) No statistics")
-        return await create("67926c2b408ebe6cf58e7dcd");
-    }
-
-    const playlist = await Playlist.findById("67926c2b408ebe6cf58e7dcd");
-    if (!playlist) 
-        return;
-    // console.log("Playlist", playlist.queue)
-    // const songId = new Types.ObjectId("679680e0ee8d890c5615fe28");
-    // const song = playlist.songs.id("679680e0ee8d890c5615fe28");
-
-    // console.log("Songs", song)
-    // console.log("Songs", statistics)
-});
 
 export const StatisticsService = {
     create,
