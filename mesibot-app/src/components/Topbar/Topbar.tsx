@@ -31,7 +31,6 @@ export const Topbar = ({ subtitle, showPlaylistPicker }: TopbarProps) => {
   const fetchPlaylists = useCallback(async () => {
     try {
       const data = await getAvailableParties();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setParties(data);
     } catch (error) {
       console.error("❌ Error fetching playlists:", error);
@@ -46,6 +45,8 @@ export const Topbar = ({ subtitle, showPlaylistPicker }: TopbarProps) => {
     fetchPlaylists();
   }, [fetchPlaylists, connectedUser]);
 
+  const selectedParty = party ? JSON.stringify(party) : "";
+
   return (
     <StyledAppBar position="static">
       <Toolbar>
@@ -55,8 +56,8 @@ export const Topbar = ({ subtitle, showPlaylistPicker }: TopbarProps) => {
         {connectedUser && showPlaylistPicker && (
           <FormControl variant="standard" sx={{ minWidth: "15vw", marginLeft: "auto" }}>
             <Select
-              value={party ? JSON.stringify(party) : ""} // ✅ Ensure controlled component
-              onChange={(e) => setParty(JSON.parse(e.target.value))} // ✅ Correctly update state
+              value={selectedParty}
+              onChange={(e) => setParty(JSON.parse(e.target.value))}
               displayEmpty
               disableUnderline
               sx={{
@@ -69,7 +70,7 @@ export const Topbar = ({ subtitle, showPlaylistPicker }: TopbarProps) => {
               }}
             >
               {parties.map((party) => (
-                <MenuItem key={party._id} value={JSON.stringify(party)}>
+                <MenuItem key={party._id} value={selectedParty}>
                   {party.title}
                 </MenuItem>
               ))}

@@ -1,6 +1,7 @@
 import { GuessTheSongView } from "../pages/Home/views/GuessTheSong/GuessTheSongView";
 import { PlaylistView } from "../pages/Home/views/PlaylistView";
 import { JoinPartyView } from "../pages/Home/views/JoinPartyView";
+import { PartyView } from "../pages/Home/views/PartyView";
 
 export interface RouteConfig {
   component: React.ComponentType;
@@ -22,7 +23,7 @@ export const routes: RouteConfig[] = [
     showPlaylistPicker: true
   },
   {
-    component: JoinPartyView,
+    component: PartyView,
     path: "/:partyId",
     name: ""
   },
