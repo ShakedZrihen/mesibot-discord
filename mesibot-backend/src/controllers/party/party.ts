@@ -78,4 +78,42 @@ partyRouter.post("/:partyId/playlist/add-song", addSongToPlaylist);
 partyRouter.post("/:partyId/playlist/upvote", upvoteSongInPlaylist);
 partyRouter.post("/:partyId/playlist/downvote", downvoteSontInPlaylist);
 
+partyRouter.post("/:partyId/join", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { partyId } = req.params;
+    const { name, avatar } = req.body;
+
+    if (!name || !avatar) {
+      res.status(400).json({ error: "Name and avatar are required" });
+      return;
+    }
+
+    const party = await Party.findById(partyId);
+
+    if (!party) {
+      res.status(404).json({ error: "Party not found" });
+      return;
+    }
+
+    // Check if participant already exists
+    const existingParticipant = party.participants.find((p) => p.name === name && p.avatar === avatar);
+    
+    if (existingParticipant) {
+      res.status(200).json(existingParticipant); // Return existing participant
+      return;
+    }
+
+    // Create new participant
+    const newParticipant = { name, avatar, score: 0 };
+    party.participants.push(newParticipant);
+
+    await party.save();
+
+    res.status(201).json(newParticipant);
+  } catch (error) {
+    console.error("Error joining party:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 partyRouter.use("/:partyId/games", gamesRouter);
