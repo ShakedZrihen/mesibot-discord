@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TextField, Modal, IconButton, InputAdornment, Box, Typography } from "@mui/material";
+import { TextField, Modal, IconButton, InputAdornment, Box, Typography, CircularProgress } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import {
   ActionsContainer,
@@ -65,24 +65,31 @@ export const GameBoard = () => {
     setModalOpen(false);
   };
 
-  const nextRound = () => {
+  const nextRound = (guessed: boolean) => {
     setRound((prev) => prev + 1);
     setShowLines(1);
     setGuess("");
     setCurrentSong(null);
 
-    setSongGuessed((prev) => {
-      if (currentSong) {
-        return [...prev, currentSong.songName];
-      }
+    if (guessed) {
+      setSongGuessed((prev) => {
+        if (currentSong) {
+          return [...prev, currentSong.songName];
+        }
 
-      return prev;
-    });
+        return prev;
+      });
+    }
+
     handleModalClose();
   };
 
   if (!currentSong) {
-    return null;
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   const showSkip = showLines === currentSong.hebLyrics.length;
@@ -122,7 +129,7 @@ export const GameBoard = () => {
           </NextButton>
         )}
         {showSkip && (
-          <SkipButton variant="contained" onClick={() => setShowLines(currentSong.hebLyrics.length)}>
+          <SkipButton variant="contained" onClick={() => nextRound(false)}>
             דלג
           </SkipButton>
         )}
@@ -155,7 +162,7 @@ export const GameBoard = () => {
             ניחשת נכון את השיר
           </Typography>
           <Box sx={{ mt: 2 }}>
-            <NextButton onClick={nextRound} variant="contained">
+            <NextButton onClick={() => nextRound(true)} variant="contained">
               סיבוב הבא
             </NextButton>
           </Box>
