@@ -30,11 +30,13 @@ partyRouter.post("/", async (req: Request, res: Response): Promise<void> => {
       scores: []
     }));
 
+    const playlist = await playlistService.create(title);
+
     // Create a new party
     const newParty = new Party({
       title,
       host,
-      playlist: await playlistService.create(title),
+      playlist: playlist._id,
       games: gameInstances,
       participants: []
     });
@@ -60,7 +62,7 @@ partyRouter.get("/", async (req: Request, res: Response): Promise<void> => {
 
 partyRouter.get("/:id", async (req: Request, res: Response): Promise<void> => {
   try {
-    const party = await Party.findById(req.params.id);
+    const party = await Party.findById(req.params.id).populate("playlist");
 
     if (!party) {
       res.status(404).json({ error: "Party not found" });
@@ -97,7 +99,7 @@ partyRouter.post("/:partyId/join", async (req: Request, res: Response): Promise<
 
     // Check if participant already exists
     const existingParticipant = party.participants.find((p) => p.name === name && p.avatar === avatar);
-    
+
     if (existingParticipant) {
       res.status(200).json(existingParticipant); // Return existing participant
       return;
