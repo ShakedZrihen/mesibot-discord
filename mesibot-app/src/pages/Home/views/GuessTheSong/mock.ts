@@ -2,15 +2,15 @@ export const guessedSongMock = {
   songName: "Complicated",
   artist: "Avril Lavigne",
   engLyrics: [
-    "You come over unannounced",
-    "Dressed up like you're something else",
-    "Where you are and where it's at, you see",
-    "Why'd you have to go and make things so complicated?"
+    "You're watching your back",
+    "Like you can't relax",
+    "You try to be cool You look like a fool to me",
+    "Tell me Why'd you have to go and make things so complicated?"
   ],
   hebLyrics: [
-    "אתה מגיע בלי להודיע",
-    "מתלבש כאילו אתה מישהו אחר",
-    "איפה שאתה נמצא ואיפה שהמציאות, אתה מבין",
-    "למה היית צריך ללכת ולהפוך את הדברים לכל כך מסובכים?"
+    "אתה כל הזמן מסתכל לאחור",
+    "כאילו שאתה לא יכול להירגע",
+    "אתה מנסה להיות קול אבל אתה נראה לי כמו טיפש",
+    "תגיד לי למה היית צריך ללכת ולהפוך את הדברים לכל כך מסובכים?"
   ]
 };

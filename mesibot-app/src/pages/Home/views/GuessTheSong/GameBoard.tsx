@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { guessedSongMock } from "./mock";
+import { TextField, Snackbar, IconButton, InputAdornment } from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import {
   ActionsContainer,
   GameBoardContainer,
@@ -16,25 +18,26 @@ interface GussSong {
   hebLyrics: string[];
 }
 
-interface Group {
-  id: string;
-  name: string;
-  rank: number;
-  winningRounds: number[];
-}
-
 export const GameBoard = () => {
-  const [currentSong, setCurrentSong] = useState<GussSong | null>(guessedSongMock);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [currentGuessingGroup, setCurrentGuessingGroup] = useState<Group | null>(null);
-  const [currentRound, setCurrentRound] = useState<number>(0);
-  const [scoreBoard, setScoreBoard] = useState<{ [key: string]: number }>({});
+  const [currentSong] = useState<GussSong | null>(guessedSongMock);
   const [showLines, setShowLines] = useState<number>(1);
+  const [guess, setGuess] = useState<string>("");
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
 
   const handleShowNextLine = () => {
     if (currentSong && showLines < currentSong.hebLyrics.length) {
       setShowLines(showLines + 1);
     }
+  };
+
+  const handleGuess = () => {
+    if (currentSong && guess.toLowerCase() === currentSong.songName.toLowerCase()) {
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   if (!currentSong) {
@@ -53,6 +56,24 @@ export const GameBoard = () => {
           </StyledLine>
         ))}
       </LinesContainer>
+      <TextField
+        value={guess}
+        onChange={(e) => setGuess(e.target.value)}
+        placeholder="מה שם השיר?"
+        variant="outlined"
+        size="small"
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconButton onClick={handleGuess} edge="start">
+                  <ChevronLeftIcon />
+                </IconButton>
+              </InputAdornment>
+            )
+          }
+        }}
+      />
       <ActionsContainer>
         {showNextButton && (
           <NextButton variant="contained" onClick={handleShowNextLine}>
@@ -65,6 +86,12 @@ export const GameBoard = () => {
           </SkipButton>
         )}
       </ActionsContainer>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        message="כל הכבוד! ניחשת נכון"
+      />
     </GameBoardContainer>
   );
 };
