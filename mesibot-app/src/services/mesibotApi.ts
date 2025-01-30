@@ -99,3 +99,8 @@ export const getAvailableParties = async () => {
   const response = await axios.get(`${BASE_URL}${API_PATHS.parties}`);
   return response.data;
 };
+
+export const getParty = async (partyId: string) => {
+  const response = await axios.get(`${BASE_URL}${API_PATHS.parties}/${partyId}`);
+  return response.data;
+};
