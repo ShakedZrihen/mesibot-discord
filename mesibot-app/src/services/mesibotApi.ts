@@ -4,8 +4,10 @@ import axios from "axios";
 const BASE_URL = "https://mesibot-be.ngrok.io";
 const API_PATHS = {
   songs: "/api/songs",
-  addSong: "/api/playlists/add-song",
-  playlist: "/api/playlists"
+  parties: "/api/party",
+  upvote: "/playlist/upvote",
+  downvote: "/playlist/downvote",
+  addSong: "/playlist/add-song"
 };
 
 export const searchSongs = async (searchTerm: string) => {
@@ -19,16 +21,17 @@ export const searchSongs = async (searchTerm: string) => {
 };
 
 export const addSongToPlaylist = async (
+  partyId: string | null,
   { song, introUrl }: { song: Song; introUrl: string | null },
   addedBy: { avatar: string; name: string },
   playlistId: string | null
 ) => {
-  if (!playlistId) {
+  if (!partyId) {
     return;
   }
 
   console.log("🎵 Adding song to playlist:", song);
-  const response = await axios.post(`${BASE_URL}${API_PATHS.addSong}`, {
+  const response = await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.addSong}`, {
     title: song.title,
     url: song.url,
     youtubeId: song.youtubeId,
@@ -40,9 +43,10 @@ export const addSongToPlaylist = async (
   return response.data;
 };
 
-export const getPlaylistSongs = async (playlistId: string) => {
+export const getPlaylistSongs = async (partyId: string) => {
   try {
-    const response = await axios.get(`${BASE_URL}${API_PATHS.playlist}/${playlistId}`);
+    const response = await axios.get(`${BASE_URL}${API_PATHS.parties}/${partyId}/playlist`);
+
     return {
       songs: response.data?.queue.length || response.data?.currentPlaying ? response.data?.queue : response.data?.songs,
       currentSong: response.data?.currentPlaying ?? null
@@ -54,15 +58,16 @@ export const getPlaylistSongs = async (playlistId: string) => {
 };
 
 export const upvoteSong = async (
+  partyId: string | null,
   songId: string,
   rateBy: { avatar: string; name: string } | null,
   playlistId: string | null
 ) => {
-  if (!playlistId) {
+  if (!partyId) {
     return;
   }
 
-  const response = await axios.post(`${BASE_URL}${API_PATHS.playlist}/upvote`, {
+  const response = await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.upvote}`, {
     songId,
     userId: rateBy?.avatar,
     playlistId
@@ -72,15 +77,16 @@ export const upvoteSong = async (
 };
 
 export const downvoteSong = async (
+  partyId: string | null,
   songId: string,
   rateBy: { avatar: string; name: string } | null,
   playlistId: string | null
 ) => {
-  if (!playlistId) {
+  if (!partyId) {
     return;
   }
 
-  const response = await axios.post(`${BASE_URL}${API_PATHS.playlist}/downvote`, {
+  const response = await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.downvote}`, {
     songId,
     userId: rateBy?.avatar,
     playlistId
@@ -89,7 +95,7 @@ export const downvoteSong = async (
   return response.data;
 };
 
-export const getAvailablePlaylists = async () => {
-  const response = await axios.get(`${BASE_URL}${API_PATHS.playlist}`);
+export const getAvailableParties = async () => {
+  const response = await axios.get(`${BASE_URL}${API_PATHS.parties}`);
   return response.data;
 };

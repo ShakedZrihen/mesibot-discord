@@ -4,6 +4,7 @@ import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
+import { wsManager } from "..";
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -88,8 +89,10 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
   } catch (error) {
     console.error("❌ Error playing song:", error);
     const updatedPlaylist = await playlistService.playNext(playlistId);
+
     if (updatedPlaylist?.currentPlaying) {
       playSong(player, playlistId, updatedPlaylist.currentPlaying);
+      wsManager.notifyPlaylistUpdate(playlistId, updatedPlaylist.queue, updatedPlaylist.currentPlaying);
     } else {
       console.log("🎵 Playlist ended.");
     }

@@ -14,7 +14,9 @@ interface PlaylistProps {
 }
 
 export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
-  const { connectedUser, playlistId } = useAppContext();
+  const { connectedUser, playlistId, party } = useAppContext();
+
+  const partyId = party?._id ?? null;
 
   return (
     <Box
@@ -47,7 +49,7 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
               <Box display="flex" alignItems="center" gap={1} mt={1}>
                 <Button
                   onClick={() => {
-                    upvoteSong(currentSong._id, connectedUser, playlistId);
+                    upvoteSong(partyId, currentSong._id, connectedUser, playlistId);
                   }}
                   startIcon={<ThumbUpIcon />}
                   sx={{ color: "white", minWidth: "40px" }}
@@ -56,7 +58,7 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
                 </Button>
                 <Button
                   onClick={() => {
-                    downvoteSong(currentSong._id, connectedUser, playlistId);
+                    downvoteSong(partyId, currentSong._id, connectedUser, playlistId);
                   }}
                   startIcon={<ThumbDownIcon />}
                   sx={{ color: "white", minWidth: "40px" }}

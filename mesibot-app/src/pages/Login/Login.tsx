@@ -5,16 +5,7 @@ import { Topbar } from "../../components/Topbar";
 import { styled, Box, Button, TextField, Avatar, alpha } from "@mui/material";
 import { useAppContext } from "../../context/useAppContext";
 import { Colors } from "../../consts/colors";
-
-const StyledLogin = styled("div")`
-  height: 100vh;
-  width: 100vw;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.75)), url("/bg.png");
-  background-repeat: repeat;
-  background-size: auto;
-  display: flex;
-  flex-direction: column;
-`;
+import { StyledPage } from "../Page.style";
 
 const StyledForm = styled(Box)`
   display: flex;
@@ -26,7 +17,7 @@ const StyledForm = styled(Box)`
   background: ${alpha(Colors.white, 0.65)};
   border-radius: 8px;
   height: -webkit-fill-available;
-  width: 80vw; 
+  width: 80vw;
   margin: 0 auto;
 
   @media (min-width: 768px) {
@@ -98,8 +89,8 @@ export const Login = () => {
   };
 
   return (
-    <StyledLogin>
-      <Topbar />
+    <StyledPage>
+      <Topbar subtitle="login" />
       <StyledForm>
         <Avatar src={avatarPreview || generateRandomAvatar(name)} sx={{ width: 80, height: 80 }} />
         <TextField
@@ -137,6 +128,6 @@ export const Login = () => {
           {loading ? "Logging in..." : "Login"}
         </StyledLoginButton>
       </StyledForm>
-    </StyledLogin>
+    </StyledPage>
   );
 };

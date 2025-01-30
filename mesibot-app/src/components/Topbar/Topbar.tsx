@@ -4,7 +4,9 @@ import AppBar from "@mui/material/AppBar";
 import MesibotIcon from "../../assets/mesibot.svg?react";
 import { Colors, MESIBOT_GRADIENT } from "../../consts/colors";
 import { useAppContext } from "../../context/useAppContext";
-import { getAvailablePlaylists } from "../../services/mesibotApi";
+import { getAvailableParties } from "../../services/mesibotApi";
+import { StyledLogoContainer, StyledSubtitle } from "./Topbar.style";
+import { Party } from "../../types/party";
 
 const StyledAppBar = styled(AppBar)`
   background: ${MESIBOT_GRADIENT};
@@ -17,15 +19,20 @@ const StyledAppBar = styled(AppBar)`
   z-index: 1000;
 `;
 
-export const Topbar = () => {
-  const { setPlaylist, playlistId, connectedUser } = useAppContext(); // ✅ Context
-  const [playlists, setPlaylists] = useState<{ title: string; id: string }[]>([]);
+interface TopbarProps {
+  subtitle?: string;
+  showPlaylistPicker?: boolean;
+}
+
+export const Topbar = ({ subtitle, showPlaylistPicker }: TopbarProps) => {
+  const { party, setParty, connectedUser } = useAppContext(); // ✅ Context
+  const [parties, setParties] = useState<Party[]>([]);
 
   const fetchPlaylists = useCallback(async () => {
     try {
-      const data = await getAvailablePlaylists();
+      const data = await getAvailableParties();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setPlaylists(data?.map(({ _id, title }: any) => ({ id: _id, title })) || []);
+      setParties(data);
     } catch (error) {
       console.error("❌ Error fetching playlists:", error);
     }
@@ -42,12 +49,14 @@ export const Topbar = () => {
   return (
     <StyledAppBar position="static">
       <Toolbar>
-        <MesibotIcon />
-        {connectedUser && (
+        <StyledLogoContainer>
+          <MesibotIcon /> {subtitle && <StyledSubtitle>{subtitle}</StyledSubtitle>}
+        </StyledLogoContainer>
+        {connectedUser && showPlaylistPicker && (
           <FormControl variant="standard" sx={{ minWidth: "15vw", marginLeft: "auto" }}>
             <Select
-              value={playlistId || ""} // ✅ Ensure controlled component
-              onChange={(e) => setPlaylist(e.target.value)} // ✅ Correctly update state
+              value={party ? JSON.stringify(party) : ""} // ✅ Ensure controlled component
+              onChange={(e) => setParty(JSON.parse(e.target.value))} // ✅ Correctly update state
               displayEmpty
               disableUnderline
               sx={{
@@ -59,9 +68,9 @@ export const Topbar = () => {
                 width: "auto"
               }}
             >
-              {playlists.map((playlist) => (
-                <MenuItem key={playlist.id} value={playlist.id}>
-                  {playlist.title}
+              {parties.map((party) => (
+                <MenuItem key={party._id} value={JSON.stringify(party)}>
+                  {party.title}
                 </MenuItem>
               ))}
             </Select>

@@ -1,6 +1,5 @@
 import { Request, Response, Router } from "express";
-import { playlistService } from "../services/playlist";
-import { StatisticsService } from "../services/statistics";
+import { playlistService } from "../../../services/playlist";
 
 export const playlistRouter = Router();
 
@@ -52,7 +51,7 @@ playlistRouter.post("/", async (req, res) => {
 
 playlistRouter.post("/add-song", async (req: Request, res: Response) => {
   const { title, url, youtubeId, playlistId, addedBy, introUrl } = req.body;
-  
+
   if (!title || !url || !youtubeId || !playlistId || !addedBy) {
     res.status(400).json({ error: "Missing required fields" });
     return;
@@ -74,7 +73,7 @@ playlistRouter.post("/upvote", async (req: Request, res: Response) => {
     res.status(400).json({ error: "Missing required fields" });
     return;
   }
-  
+
   try {
     const playlist = await playlistService.upvoteSong(playlistId, songId, userId);
     res.json({ message: "Upvoted successfully", playlist });

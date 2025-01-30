@@ -1,4 +1,5 @@
 import { createContext } from "react";
+import { Party } from "../types/party";
 
 export interface User {
   name: string;
@@ -8,7 +9,8 @@ export interface User {
 export interface AppContextType {
   connectedUser: User | null;
   playlistId: string | null;
-  setPlaylist: (playlistId: string) => void;
+  party: Party | null;
+  setParty: (party: Party) => void;
   login: (user: User) => void;
   logout: () => void;
 }
