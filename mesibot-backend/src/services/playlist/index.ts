@@ -1,5 +1,5 @@
-import { clear } from "console";
-import { create } from "domain";
+import { clear } from "./clear";
+import { create } from "./create";
 import { addSong } from "./addSong";
 import { downvoteSong } from "./downvote";
 import { getAll } from "./getAll";

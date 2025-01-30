@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Models } from ".";
 
 const SongSchema = new mongoose.Schema({
   songName: String,
@@ -25,7 +26,8 @@ const Group = new mongoose.Schema({
   winningRounds: [Number]
 });
 
-const RoomSchema = new mongoose.Schema({
+export const GameSchema = new mongoose.Schema({
+  title: String,
   rounds: [RoundSchema],
   maxRounds: {
     type: Number,
@@ -38,4 +40,4 @@ const RoomSchema = new mongoose.Schema({
   groups: [Group]
 });
 
-export const Room = mongoose.model("GuessTheSongRoom", RoomSchema);
+export const Game = mongoose.model(Models.Game, GameSchema);
