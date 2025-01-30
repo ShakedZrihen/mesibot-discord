@@ -13,7 +13,7 @@ const SongSchema = new mongoose.Schema({
   introUrl: { type: String, default: null }
 });
 
-const PlaylistSchema = new mongoose.Schema(
+export const PlaylistSchema = new mongoose.Schema(
   {
     title: String,
     userId: String,
