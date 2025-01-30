@@ -1,4 +1,5 @@
 export enum StorageKeys {
   USER = "mesibot-user",
-  PLAYLIST_ID = "mesibot-playlist-id"
+  PLAYLIST_ID = "mesibot-playlist-id",
+  PARTY = "mesibot-selected-party",
 }

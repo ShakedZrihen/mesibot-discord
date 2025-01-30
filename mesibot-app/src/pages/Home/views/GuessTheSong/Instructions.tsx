@@ -1,13 +1,5 @@
 import { Button, styled } from "@mui/material";
-import { Colors } from "../../../consts/colors";
-
-const StyledContainer = styled("div")`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20vh;
-`;
+import { Colors } from "../../../../consts/colors";
 
 const PageTitle = styled("h2")`
   direction: rtl;
@@ -23,9 +15,13 @@ const Bold = styled("span")`
   font-weight: bold;
 `;
 
-export const GuessTheSongView = () => {
+interface InstructionsProps {
+  setStarted: (started: boolean) => void;
+}
+
+export const Instructions = ({ setStarted }: InstructionsProps) => {
   return (
-    <StyledContainer>
+    <>
       <PageTitle>איזה שיר?</PageTitle>
       <Content>
         בכל סיבוב נציג שורה מתוך <Bold>שיר באנגלית, מתורגמת לעברית</Bold>.
@@ -33,7 +29,7 @@ export const GuessTheSongView = () => {
         הקבוצה שתלחץ ראשונה על הבאזר תוכל לנסות <Bold>לנחש את שם השיר</Bold>.
         <br />
         <br />
-        💡 אם התשובה נכונה – הקבוצה זוכה בניקודות!
+        💡 אם התשובה נכונה – הקבוצה זוכה בנקודות!
         <br />
         ❌ אם טועים – ההזדמנות עוברת לקבוצה היריבה.
         <br />
@@ -41,9 +37,13 @@ export const GuessTheSongView = () => {
         <br />
         <Bold>המטרה:</Bold> לזהות את השיר כמה שיותר מהר ולצבור את מירב הנקודות!
       </Content>
-      <Button variant="contained" sx={{ backgroundColor: Colors.pink, direction: "rtl" }}>
+      <Button
+        variant="contained"
+        sx={{ backgroundColor: Colors.pink, direction: "rtl" }}
+        onClick={() => setStarted(true)}
+      >
         #יאללה_התחלנו
       </Button>
-    </StyledContainer>
+    </>
   );
 };

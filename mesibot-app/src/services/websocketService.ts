@@ -5,6 +5,10 @@ interface PlaylistUpdate {
   currentSong: Song | null;
 }
 
+enum EventTypes {
+  PLAYLIST_UPDATE = "playlistUpdate"
+}
+
 export class WebSocketService {
   private ws: WebSocket | null = null;
   private reconnectTimeout: number = 3000;
@@ -33,7 +37,7 @@ export class WebSocketService {
       this.ws.onmessage = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === "playlistUpdate") {
+          if (data.type === EventTypes.PLAYLIST_UPDATE) {
             this.onUpdate(data.payload);
           }
         } catch (err) {

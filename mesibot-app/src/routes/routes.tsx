@@ -1,4 +1,4 @@
-import { GuessTheSongView } from "../pages/Home/views/GuessTheSongView";
+import { GuessTheSongView } from "../pages/Home/views/GuessTheSong/GuessTheSongView";
 import { PlaylistView } from "../pages/Home/views/PlaylistView";
 
 export interface RouteConfig {

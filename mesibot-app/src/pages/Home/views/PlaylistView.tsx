@@ -14,7 +14,7 @@ export const PlaylistView = () => {
   const [currentSong, setCurrentSong] = useState<any>(null);
   const wsRef = useRef<WebSocketService | null>(null);
 
-  const { playlistId } = useAppContext();
+  const { party } = useAppContext();
 
   const updateSongs = ({ currentSong, songs }: { currentSong: Song | null; songs: Song[] }) => {
     if (currentSong) {
@@ -25,21 +25,21 @@ export const PlaylistView = () => {
   };
 
   useEffect(() => {
-    if (!playlistId) {
+    if (!party?._id) {
       return;
     }
 
     // Initial fetch
-    getPlaylistSongs(playlistId).then(updateSongs);
+    getPlaylistSongs(party._id).then(updateSongs);
 
     // Setup WebSocket connection
-    wsRef.current = new WebSocketService(playlistId, updateSongs);
+    wsRef.current = new WebSocketService(party.playlist._id, updateSongs);
 
     // Cleanup WebSocket on unmount
     return () => {
       wsRef.current?.disconnect();
     };
-  }, [playlistId]);
+  }, [party]);
 
   return (
     <>
