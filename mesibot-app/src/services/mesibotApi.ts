@@ -1,3 +1,4 @@
+import { User } from "../context/AppContext";
 import { Song } from "../types/playlist";
 import axios from "axios";
 
@@ -102,5 +103,12 @@ export const getAvailableParties = async () => {
 
 export const getParty = async (partyId: string) => {
   const response = await axios.get(`${BASE_URL}${API_PATHS.parties}/${partyId}`);
+  return response.data;
+};
+
+export const joinParty = async (partyId: string, connectedUser: User) => {
+  const response = await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}/join`, {
+    ...connectedUser
+  });
   return response.data;
 };

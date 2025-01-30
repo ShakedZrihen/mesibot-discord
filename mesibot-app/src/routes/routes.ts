@@ -17,10 +17,22 @@ export const routes: RouteConfig[] = [
   },
   {
     component: PlaylistView,
+    path: "/:partyId/playlist",
+    name: "Playlist",
+    showPlaylistPicker: true
+  },
+  {
+    component: JoinPartyView,
+    path: "/:partyId",
+    name: ""
+  },
+  {
+    component: PlaylistView,
     path: "/playlist",
     name: "Playlist",
     showPlaylistPicker: true
   },
+
   {
     component: GuessTheSongView,
     path: "/games/guess-the-song",
