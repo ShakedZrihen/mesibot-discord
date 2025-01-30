@@ -7,7 +7,7 @@ import MicIcon from "../../assets/micIcon.svg?react";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-console.log({ isMobileDevice });
+console.log("Running on mobile device:", isMobileDevice);
 const MIME_TYPE = isMobileDevice ? "audio/mp4" : "audio/webm"; // ✅ Use webm instead of mp4
 const FILE_EXTENSION = isMobileDevice ? ".mp4" : ".webm";
 
