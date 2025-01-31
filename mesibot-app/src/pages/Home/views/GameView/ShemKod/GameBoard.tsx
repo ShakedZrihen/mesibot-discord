@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CircularProgress, Typography } from "@mui/material";
-import { GameBoardContainer, RowContainer, StyledLoader, WordCard } from "./GameBoard.style";
+import { GameBoardContainer, RowContainer, StyledLoader, WordCard ,RemainingCards, RemainingCardsContainer} from "./GameBoard.style";
 import * as mesibotApi from "../../../../../services/mesibotApi";
 import { useAppContext } from "../../../../../context/useAppContext";
 import { Groups, Mode } from "./types";
@@ -22,37 +22,43 @@ interface GameBoardProps {
   mode: Mode;
 }
 
-const getWinner = (board: WordTile[][] | null) => {
+const cardsState = (board: WordTile[][] | null) => {
   if (!board) {
     return null;
   }
-
-  let blueCardsRemaining = 0;
-  let redCardsRemaining = 0;
+  const cardsState: {blueCardsRemaining:number, redCardsRemaining:number, winner:number | null } = {
+    blueCardsRemaining : 0,
+    redCardsRemaining : 0,
+    winner: null
+  }
 
   board.forEach((row) => {
     row.forEach((tile) => {
       if (!tile.isOpen) {
         if (tile.group === Groups.Red) {
-          blueCardsRemaining++;
+          cardsState["blueCardsRemaining"]++;
         }
         if (tile.group === Groups.Blue) {
-          redCardsRemaining++;
+          cardsState["redCardsRemaining"]++;
         }
       }
     });
   });
 
-  if (blueCardsRemaining === 0) {
+  if (cardsState["blueCardsRemaining"] === 0) {
     // Blue team wins
-    return 1;
+    cardsState["winner"] = 1;
+    return cardsState;
   }
-  if (redCardsRemaining === 0) {
+  if (cardsState["redCardsRemaining"] === 0) {
     // Red team wins
-    return 2;
+    cardsState["winner"] = 2;
+    return cardsState;
+    
   }
-
-  return null; // No winner yet
+  // No winner yet
+  cardsState["winner"] = null;
+  return cardsState; 
 };
 
 export const GameBoard = ({ mode }: GameBoardProps) => {
@@ -61,6 +67,7 @@ export const GameBoard = ({ mode }: GameBoardProps) => {
   const [, forceRender] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [winner, setWinner] = useState<number | null>(null);
+  const [remainingCards, setRemainingCards] = useState<{blues:number, reds:number}>({blues:0, reds:0});
   const { party } = useAppContext();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,11 +75,12 @@ export const GameBoard = ({ mode }: GameBoardProps) => {
     const currentRoundIndex = response.currentRound - 1;
     if (response.rounds[currentRoundIndex]) {
       boardRef.current = response.rounds[currentRoundIndex].board;
-      const winner = getWinner(boardRef.current);
-      if (winner) {
-        setWinner(winner);
+      const CurrCardState = cardsState(boardRef.current);
+      if (CurrCardState?.winner) {
+        setWinner(CurrCardState.winner);
         setModalOpen(true);
       }
+      setRemainingCards({blues:CurrCardState?.blueCardsRemaining || 0, reds:CurrCardState?.redCardsRemaining || 0});
       forceRender((prev) => prev + 1);
     }
   };
@@ -114,6 +122,15 @@ export const GameBoard = ({ mode }: GameBoardProps) => {
 
   return (
     <GameBoardContainer>
+      {mode === "map" ? null:
+      <RemainingCardsContainer>
+        <RemainingCards group={"red"}>
+          <Typography variant="h6">אדומים: {remainingCards.blues}</Typography>
+        </RemainingCards>
+        <RemainingCards group={"blue"}>
+          <Typography variant="h6">כחולים: {remainingCards.reds}</Typography>
+        </RemainingCards>
+      </RemainingCardsContainer>}
       {boardRef.current.map((row, rowIndex) => (
         <RowContainer key={rowIndex}>
           {row.map((tile, colIndex) => (
