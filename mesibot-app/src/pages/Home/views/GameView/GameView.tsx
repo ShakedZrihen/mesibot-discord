@@ -10,6 +10,7 @@ import { useAppContext } from "../../../../context/useAppContext";
 export const GameView = () => {
   const { party } = useAppContext();
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  
 
   const handleGameClick = (game: Game) => {
     setSelectedGame(game);

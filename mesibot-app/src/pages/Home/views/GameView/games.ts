@@ -1,5 +1,6 @@
 import { GuessTheSongView } from "../GuessTheSong";
 import { ShemKodView } from "../ShemKod";
+import { BuzzerView } from "../BuzzerView";
 
 export interface Game {
   id: string;
@@ -19,6 +20,12 @@ export const games: Game[] = [
     id: "shemkod",
     name: "שם קוד",
     component: ShemKodView,
+    completed: false
+  },
+  {
+    id: "click-the-buzzer",
+    name: "לחץ על הכפתור",
+    component: BuzzerView,
     completed: false
   }
   // Add more games here as needed
