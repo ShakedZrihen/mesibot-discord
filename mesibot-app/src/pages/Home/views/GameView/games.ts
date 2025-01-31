@@ -1,6 +1,6 @@
-import { GuessTheSongView } from "../GuessTheSong";
-import { ShemKodView } from "../ShemKod";
 import { BuzzerView } from "../BuzzerView";
+import { GuessTheSongView } from "./GuessTheSong";
+import { ShemKodView } from "./ShemKod";
 
 export interface Game {
   id: string;

@@ -14,7 +14,7 @@ const GameInstanceSchema = new mongoose.Schema({
   rounds: [mongoose.Schema.Types.Mixed],
   maxRounds: { type: Number, default: 10 },
   currentRound: { type: Number, default: 0 },
-  scores: [{ participantId: mongoose.Schema.Types.ObjectId, score: Number }]
+  scores: [{ participantId: mongoose.Schema.Types.Mixed, score: Number }]
 });
 
 const PartySchema = new mongoose.Schema({

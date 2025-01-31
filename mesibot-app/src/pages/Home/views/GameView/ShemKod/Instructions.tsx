@@ -1,6 +1,6 @@
 import { Button } from "@mui/material";
-import { Colors } from "../../../../consts/colors";
-import { PageTitle, Content, Bold } from "../view.style";
+import { Bold, Content, PageTitle } from "../../view.style";
+import { Colors } from "../../../../../consts/colors";
 
 interface InstructionsProps {
   setStarted: (started: boolean) => void;

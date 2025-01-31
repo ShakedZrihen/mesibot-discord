@@ -1,6 +1,6 @@
 import { Button, darken, styled } from "@mui/material";
-import { Colors } from "../../../../consts/colors";
-import { Content } from "../view.style";
+import { Content } from "../../view.style";
+import { Colors } from "../../../../../consts/colors";
 
 export const StyledLine = styled(Content)<{ showLines: number; index: number }>`
   font-size: 24px;
