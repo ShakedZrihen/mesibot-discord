@@ -38,7 +38,6 @@ export const downvoteSong = async (playlistId: string, songId: string, userId: s
   playlist.queue = playlist.queue.sort((a, b) => b.rank - a.rank);
 
   await playlist.save();
-  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
   await StatisticsService.downVote(playlistId, songId, userId, song.upvotedBy, song.downvotedBy);
 
   return playlist;

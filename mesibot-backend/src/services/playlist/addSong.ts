@@ -30,7 +30,6 @@ export const addSong = async (
   playlist.queue.sort((a, b) => b.rank - a.rank);
 
   await playlist.save();
-  wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
 
   return playlist;
 };

@@ -1,8 +1,9 @@
+import { BASE_DOMAIN } from "../consts/general";
 import { User } from "../context/AppContext";
 import { Song } from "../types/playlist";
 import axios from "axios";
 
-const BASE_URL = "https://mesibot-be.ngrok.io";
+const BASE_URL = `http://${BASE_DOMAIN}`;
 const API_PATHS = {
   songs: "/api/songs",
   parties: "/api/party",

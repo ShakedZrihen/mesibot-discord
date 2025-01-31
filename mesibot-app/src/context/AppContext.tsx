@@ -1,5 +1,6 @@
 import { createContext } from "react";
 import { Party } from "../types/party";
+import { WebSocketService } from "../services/websocketService";
 
 export interface User {
   name: string;
@@ -13,6 +14,7 @@ export interface AppContextType {
   setParty: (party: Party) => void;
   login: (user: User) => void;
   logout: () => void;
+  websocketService: WebSocketService | null;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);

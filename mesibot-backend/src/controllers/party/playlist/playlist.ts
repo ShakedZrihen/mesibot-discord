@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import { playlistService } from "../../../services/playlist";
 import { Party } from "../../../models/Party";
+import { wsManager } from "../../..";
 
 export const getPartyPlaylist = async (req: Request, res: Response): Promise<void> => {
   try {
     const { partyId } = req.params;
     const party = await Party.findById(partyId).populate("playlist");
-    
+
     if (!party) {
       res.status(404).json({ error: "Party not found" });
       return;
@@ -20,6 +21,7 @@ export const getPartyPlaylist = async (req: Request, res: Response): Promise<voi
 
 export const addSongToPlaylist = async (req: Request, res: Response) => {
   const { title, url, youtubeId, playlistId, addedBy, introUrl } = req.body;
+  const { partyId } = req.params;
 
   if (!title || !url || !youtubeId || !playlistId || !addedBy) {
     res.status(400).json({ error: "Missing required fields" });
@@ -28,6 +30,8 @@ export const addSongToPlaylist = async (req: Request, res: Response) => {
 
   try {
     const playlist = await playlistService.addSong(title, url, youtubeId, playlistId, addedBy, introUrl);
+    wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying);
+
     res.status(201).json({ message: "Song added successfully", playlist });
   } catch (error) {
     console.error("Error adding song:", error);
@@ -37,6 +41,7 @@ export const addSongToPlaylist = async (req: Request, res: Response) => {
 
 export const upvoteSongInPlaylist = async (req: Request, res: Response) => {
   const { playlistId, songId, userId } = req.body;
+  const { partyId } = req.params;
 
   if (!playlistId || !songId || !userId) {
     res.status(400).json({ error: "Missing required fields" });
@@ -45,6 +50,10 @@ export const upvoteSongInPlaylist = async (req: Request, res: Response) => {
 
   try {
     const playlist = await playlistService.upvoteSong(playlistId, songId, userId);
+    if (playlist) {
+      wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying);
+    }
+
     res.json({ message: "Upvoted successfully", playlist });
   } catch (error) {
     console.error("❌ Error upvoting:", error);
@@ -54,6 +63,7 @@ export const upvoteSongInPlaylist = async (req: Request, res: Response) => {
 
 export const downvoteSontInPlaylist = async (req: Request, res: Response) => {
   const { playlistId, songId, userId } = req.body;
+  const { partyId } = req.params;
 
   if (!playlistId || !songId || !userId) {
     res.status(400).json({ error: "Missing required fields" });
@@ -62,6 +72,11 @@ export const downvoteSontInPlaylist = async (req: Request, res: Response) => {
 
   try {
     const playlist = await playlistService.downvoteSong(playlistId, songId, userId);
+
+    if (playlist) {
+      wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying);
+    }
+
     res.json({ message: "Downvoted successfully", playlist });
   } catch (error) {
     console.error("❌ Error downvoting:", error);
