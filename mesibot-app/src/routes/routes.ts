@@ -1,5 +1,8 @@
 import { GuessTheSongView } from "../pages/Home/views/GuessTheSong/GuessTheSongView";
 import { PlaylistView } from "../pages/Home/views/PlaylistView";
+import { JoinPartyView } from "../pages/Home/views/JoinPartyView";
+import { PartyView } from "../pages/Home/views/PartyView";
+import { GameView } from "../pages/Home/views/GameView";
 
 export interface RouteConfig {
   component: React.ComponentType;
@@ -10,10 +13,26 @@ export interface RouteConfig {
 
 export const routes: RouteConfig[] = [
   {
-    component: PlaylistView,
+    component: JoinPartyView,
     path: "/",
+    name: ""
+  },
+  {
+    component: PlaylistView,
+    path: "/:partyId/playlist",
     name: "Playlist",
     showPlaylistPicker: true
+  },
+  {
+    component: GameView,
+    path: "/:partyId/games",
+    name: "Games",
+    showPlaylistPicker: true
+  },
+  {
+    component: PartyView,
+    path: "/:partyId",
+    name: ""
   },
   {
     component: PlaylistView,
@@ -21,6 +40,7 @@ export const routes: RouteConfig[] = [
     name: "Playlist",
     showPlaylistPicker: true
   },
+
   {
     component: GuessTheSongView,
     path: "/games/guess-the-song",

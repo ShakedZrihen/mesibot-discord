@@ -19,7 +19,7 @@ const GameInstanceSchema = new mongoose.Schema({
 
 const PartySchema = new mongoose.Schema({
   title: { type: String, required: true },
-  playlist: PlaylistSchema,
+  playlist: { type: mongoose.Schema.Types.ObjectId, ref: Models.Playlist, required: true },
   host: {
     name: { type: String, required: true },
     avatar: { type: String, required: true }

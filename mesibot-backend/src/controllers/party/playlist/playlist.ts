@@ -5,8 +5,8 @@ import { Party } from "../../../models/Party";
 export const getPartyPlaylist = async (req: Request, res: Response): Promise<void> => {
   try {
     const { partyId } = req.params;
-    const party = await Party.findById(partyId);
-
+    const party = await Party.findById(partyId).populate("playlist");
+    
     if (!party) {
       res.status(404).json({ error: "Party not found" });
       return;

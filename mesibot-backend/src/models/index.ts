@@ -5,5 +5,5 @@ export enum Models {
   User = "User",
   Vote = "Vote",
   Game = "Game",
-  GameTemplate = "GameTemplate",
+  GameTemplate = "gametemplate",
 }

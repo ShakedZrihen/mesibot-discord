@@ -30,11 +30,13 @@ partyRouter.post("/", async (req: Request, res: Response): Promise<void> => {
       scores: []
     }));
 
+    const playlist = await playlistService.create(title);
+
     // Create a new party
     const newParty = new Party({
       title,
       host,
-      playlist: await playlistService.create(title),
+      playlist: playlist._id,
       games: gameInstances,
       participants: []
     });
@@ -58,9 +60,20 @@ partyRouter.get("/", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+partyRouter.get("/games", async (req, res) => {
+  try {
+    const games = await GameTemplate.find();
+    console.log(games);
+    res.status(200).json(games);
+  } catch (error) {
+    console.error("Error fetching games:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 partyRouter.get("/:id", async (req: Request, res: Response): Promise<void> => {
   try {
-    const party = await Party.findById(req.params.id);
+    const party = await Party.findById(req.params.id).populate("playlist");
 
     if (!party) {
       res.status(404).json({ error: "Party not found" });
@@ -97,9 +110,9 @@ partyRouter.post("/:partyId/join", async (req: Request, res: Response): Promise<
 
     // Check if participant already exists
     const existingParticipant = party.participants.find((p) => p.name === name && p.avatar === avatar);
-    
+
     if (existingParticipant) {
-      res.status(200).json(existingParticipant); // Return existing participant
+      res.status(200).json(party);
       return;
     }
 
@@ -107,9 +120,9 @@ partyRouter.post("/:partyId/join", async (req: Request, res: Response): Promise<
     const newParticipant = { name, avatar, score: 0 };
     party.participants.push(newParticipant);
 
-    await party.save();
+    const updatedParty = await party.save();
 
-    res.status(201).json(newParticipant);
+    res.status(200).json(updatedParty);
   } catch (error) {
     console.error("Error joining party:", error);
     res.status(500).json({ error: "Internal Server Error" });
