@@ -8,7 +8,6 @@ export const connectDB = async () => {
     }
     await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
-      useUnifiedTopology: true
     } as any);
     console.log("✅ Connected to MongoDB Atlas");
   } catch (error) {

@@ -1,9 +1,11 @@
 import { useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAppContext } from "../../../context/useAppContext";
-import * as mesibotApi from "../../../services/mesibotApi";
+import { useAppContext } from "../../../../context/useAppContext";
+import * as mesibotApi from "../../../../services/mesibotApi";
 import { Box, Button } from "@mui/material";
-import { Colors } from "../../../consts/colors";
+import { Colors } from "../../../../consts/colors";
+import { PartyViewContainer } from "./PartyView.style";
+import { Header } from "./Header";
 
 export const PartyView = () => {
   const hasJoined = useRef(false);
@@ -41,16 +43,8 @@ export const PartyView = () => {
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: "3vh",
-        flexDirection: "column"
-      }}
-    >
-      <h2>Welcome to {party.title} Party!</h2>
+    <PartyViewContainer>
+      <Header title={party.title} />
       <Box display="flex" flexDirection="column" gap="0.5rem" marginTop="2vh" padding="1rem">
         <Button
           variant="contained"
@@ -74,6 +68,6 @@ export const PartyView = () => {
           Leaderboard
         </Button>
       </Box>
-    </Box>
+    </PartyViewContainer>
   );
 };

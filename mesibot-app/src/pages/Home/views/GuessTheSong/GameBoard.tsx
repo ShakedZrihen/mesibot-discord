@@ -107,7 +107,7 @@ export const GameBoard = () => {
       <TextField
         value={guess}
         onChange={(e) => setGuess(e.target.value)}
-        placeholder="מה שם השיר?"
+        placeholder="?מה שם השיר"
         variant="outlined"
         size="small"
         slotProps={{
