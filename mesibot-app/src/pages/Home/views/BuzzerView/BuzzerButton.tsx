@@ -19,11 +19,15 @@ export function BuzzerButton({ selectedColorValue, onPlay, small }: BuzzerButton
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if (e.code === "Space") handlePressStart();
+    if (e.code === "Space") {
+      handlePressStart();
+    }
   };
 
   const onKeyUp = (e: KeyboardEvent) => {
-    if (e.code === "Space") handlePressEnd();
+    if (e.code === "Space") {
+      handlePressEnd();
+    }
   };
 
   return (
