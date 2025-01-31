@@ -29,6 +29,12 @@ export const GameBoard = () => {
   const [round, setRound] = useState(1);
   const { party } = useAppContext();
 
+  // TODO: add function that will get user:User as input and will popup the "Button Pressed" Modal
+
+  useEffect(() => {
+    // TODO: signEvent to websocket with EventType buttonPressed and attach above function ^ as callback
+  }, []);
+
   useEffect(() => {
     const getSong = async (attempts = 1) => {
       if (attempts > 4) {

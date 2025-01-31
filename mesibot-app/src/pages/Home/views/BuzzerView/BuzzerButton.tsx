@@ -8,6 +8,7 @@ interface BuzzerButtonProps {
 
 export function BuzzerButton({ selectedColorValue, onPlay, small }: BuzzerButtonProps) {
   const [isPressed, setIsPressed] = useState(false);
+  // TODO: add const {connectetUser} = useAppContext(); to get the user
 
   const handlePressStart = () => {
     setIsPressed(true);
@@ -15,6 +16,7 @@ export function BuzzerButton({ selectedColorValue, onPlay, small }: BuzzerButton
   };
 
   const handlePressEnd = () => {
+    // TODO: call mesibotApi.pressTheBuzzer with the user:User
     setIsPressed(false);
   };
 

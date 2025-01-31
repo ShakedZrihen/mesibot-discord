@@ -9,6 +9,8 @@ interface PlaylistUpdate {
   };
 }
 
+// TODO: create new update type like above ^ with payload: {user: {name, avatar}}
+
 class WebSocketManager {
   private wss: WebSocketServer;
   private partiesConnections: Map<string, Set<WebSocket>> = new Map();
@@ -78,6 +80,8 @@ class WebSocketManager {
       }
     });
   }
+
+  // notifyBuzzerPressed, samelike notifyPlaylistUpdate but send only { user } in update
 }
 
 export default WebSocketManager;
