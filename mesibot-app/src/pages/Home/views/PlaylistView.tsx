@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AddSongModal } from "../../../components/AddSongModal/AddSongModal";
 import { AddSong } from "../../../components/AddSongButton";
 import { useAppContext } from "../../../context/useAppContext";
 import { getPlaylistSongs } from "../../../services/mesibotApi";
-import { WebSocketService } from "../../../services/websocketService";
+import { EventTypes } from "../../../services/websocketService";
 import { Song } from "../../../types/playlist";
 import { Playlist } from "../../../components/Playlist";
 
@@ -12,7 +12,7 @@ export const PlaylistView = () => {
   const [openModal, setOpenModal] = useState(false);
   const [songs, setSongs] = useState<any[]>([]);
   const [currentSong, setCurrentSong] = useState<any>(null);
-  const wsRef = useRef<WebSocketService | null>(null);
+  const { websocketService } = useAppContext();
 
   const { party } = useAppContext();
 
@@ -32,14 +32,8 @@ export const PlaylistView = () => {
     // Initial fetch
     getPlaylistSongs(party._id).then(updateSongs);
 
-    // Setup WebSocket connection
-    wsRef.current = new WebSocketService(party.playlist._id, updateSongs);
-
-    // Cleanup WebSocket on unmount
-    return () => {
-      wsRef.current?.disconnect();
-    };
-  }, [party]);
+    websocketService?.signEvent(EventTypes.PLAYLIST_UPDATE, updateSongs);
+  }, [party, websocketService]);
 
   return (
     <>

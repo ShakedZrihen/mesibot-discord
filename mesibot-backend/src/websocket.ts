@@ -11,7 +11,7 @@ interface PlaylistUpdate {
 
 class WebSocketManager {
   private wss: WebSocketServer;
-  private playlistConnections: Map<string, Set<WebSocket>> = new Map();
+  private partiesConnections: Map<string, Set<WebSocket>> = new Map();
 
   constructor(server: Server) {
     this.wss = new WebSocketServer({ server });
@@ -21,43 +21,48 @@ class WebSocketManager {
   private setupWebSocket() {
     console.log("Setup webSocket");
     this.wss.on("connection", (ws, req) => {
-      const playlistId = this.getPlaylistIdFromUrl(req.url);
+      const partyId = this.getPartyIdFromUrl(req.url);
 
-      if (!playlistId) {
+      if (!partyId) {
         ws.close();
         return;
       }
 
-      this.addConnection(playlistId, ws);
+      this.addConnection(partyId, ws);
 
       ws.on("close", () => {
-        this.removeConnection(playlistId, ws);
+        this.removeConnection(partyId, ws);
       });
     });
   }
 
-  private getPlaylistIdFromUrl(url: string | undefined): string | null {
-    if (!url) return null;
-    const match = url.match(/\/playlist\/([^/]+)/);
+  private getPartyIdFromUrl(url: string | undefined): string | null {
+    if (!url) {
+      return null;
+    }
+
+    const match = url.match(/\/party\/([^/]+)/);
+
     return match ? match[1] : null;
   }
 
-  private addConnection(playlistId: string, ws: WebSocket) {
-    if (!this.playlistConnections.has(playlistId)) {
-      this.playlistConnections.set(playlistId, new Set());
+  private addConnection(partyId: string, ws: WebSocket) {
+    if (!this.partiesConnections.has(partyId)) {
+      this.partiesConnections.set(partyId, new Set());
     }
-    this.playlistConnections.get(playlistId)?.add(ws);
+
+    this.partiesConnections.get(partyId)?.add(ws);
   }
 
-  private removeConnection(playlistId: string, ws: WebSocket) {
-    this.playlistConnections.get(playlistId)?.delete(ws);
-    if (this.playlistConnections.get(playlistId)?.size === 0) {
-      this.playlistConnections.delete(playlistId);
+  private removeConnection(partyId: string, ws: WebSocket) {
+    this.partiesConnections.get(partyId)?.delete(ws);
+    if (this.partiesConnections.get(partyId)?.size === 0) {
+      this.partiesConnections.delete(partyId);
     }
   }
 
-  public notifyPlaylistUpdate(playlistId: string, songs: any[], currentSong: any | null) {
-    const connections = this.playlistConnections.get(playlistId);
+  public notifyPlaylistUpdate(partyId: string, songs: any[], currentSong: any | null) {
+    const connections = this.partiesConnections.get(partyId);
     if (!connections) {
       return;
     }

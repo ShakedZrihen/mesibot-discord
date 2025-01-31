@@ -1,33 +1,32 @@
-import { Song } from "../types/playlist";
+import { BASE_DOMAIN } from "../consts/general";
 
-interface PlaylistUpdate {
-  songs: Song[];
-  currentSong: Song | null;
-}
-
-enum EventTypes {
-  PLAYLIST_UPDATE = "playlistUpdate"
+export enum EventTypes {
+  PLAYLIST_UPDATE = "playlistUpdate",
+  BUZZER_PRESSED = "buzzerPressed"
 }
 
 export class WebSocketService {
   private ws: WebSocket | null = null;
   private reconnectTimeout: number = 3000;
   private isConnecting: boolean = false;
-  private playlistId: string;
-  private onUpdate: (data: PlaylistUpdate) => void;
+  private partyId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private events: { [key: string]: any } = {};
 
-  constructor(playlistId: string, onUpdate: (data: PlaylistUpdate) => void) {
-    this.playlistId = playlistId;
-    this.onUpdate = onUpdate;
+  constructor(partyId: string) {
+    this.partyId = partyId;
     this.connect();
   }
 
   private connect = () => {
-    if (this.isConnecting) return;
+    if (this.isConnecting) {
+      return;
+    }
+
     this.isConnecting = true;
 
     try {
-      this.ws = new WebSocket(`ws://localhost:3000/playlist/${this.playlistId}`);
+      this.ws = new WebSocket(`ws://${BASE_DOMAIN}/party/${this.partyId}`);
 
       this.ws.onopen = () => {
         console.log("✅ WebSocket connected!");
@@ -37,8 +36,9 @@ export class WebSocketService {
       this.ws.onmessage = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === EventTypes.PLAYLIST_UPDATE) {
-            this.onUpdate(data.payload);
+          const eventHandler = this.events[data.type];
+          if (eventHandler) {
+            eventHandler(data.payload);
           }
         } catch (err) {
           console.error("❌ Error parsing WebSocket message:", err);
@@ -70,5 +70,10 @@ export class WebSocketService {
     if (this.ws) {
       this.ws.close();
     }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public signEvent = (eventName: string, callback: any) => {
+    this.events[eventName] = callback;
   };
 }
