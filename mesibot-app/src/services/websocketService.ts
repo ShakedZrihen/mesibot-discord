@@ -26,7 +26,7 @@ export class WebSocketService {
     this.isConnecting = true;
 
     try {
-      this.ws = new WebSocket(`ws://${BASE_DOMAIN}/party/${this.partyId}`);
+      this.ws = new WebSocket(`${BASE_DOMAIN.includes("https") ? "wss" : "ws"}://${BASE_DOMAIN}/party/${this.partyId}`);
 
       this.ws.onopen = () => {
         console.log("✅ WebSocket connected!");
