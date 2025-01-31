@@ -6,7 +6,7 @@ import { Header } from "./Header";
 import { Content } from "./Content";
 import { Actions } from "./Actions";
 import { Song } from "../../types/playlist";
-import { debounce } from "lodash";
+import debounce from "lodash.debounce";
 
 interface AddSongModalProps {
   open: boolean;
