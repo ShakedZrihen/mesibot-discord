@@ -1,11 +1,12 @@
 import { useMediaQuery, useTheme } from "@mui/material";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { StyledDialog } from "./AddSongModal.style";
 import * as mesibotApi from "../../services/mesibotApi";
 import { Header } from "./Header";
 import { Content } from "./Content";
 import { Actions } from "./Actions";
 import { Song } from "../../types/playlist";
+import { debounce } from "lodash";
 
 interface AddSongModalProps {
   open: boolean;
@@ -22,20 +23,20 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
   const [recording, setRecording] = useState(false);
   const [recordFile, setRecordFile] = useState<File | null>(null);
 
-  const fetchSongs = async (searchTerm: string) => {
-    if (searchTerm.length < 3) {
-      return;
-    }
+  const debouncedFetchSongs = useRef(
+    debounce(async (searchTerm) => {
+      if (searchTerm.length < 3) return;
 
-    setLoading(true);
-    try {
-      const response = await mesibotApi.searchSongs(searchTerm);
-      setSuggestions(response);
-    } catch (error) {
-      console.error("❌ Error fetching songs:", error);
-    }
-    setLoading(false);
-  };
+      setLoading(true);
+      try {
+        const response = await mesibotApi.searchSongs(searchTerm);
+        setSuggestions(response);
+      } catch (error) {
+        console.error("❌ Error fetching songs:", error);
+      }
+      setLoading(false);
+    }, 500) // 500ms debounce
+  ).current;
 
   return (
     <StyledDialog open={open} onClose={onClose} fullScreen={isMobile} maxWidth="sm" fullWidth>
@@ -46,7 +47,7 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
         setRecording={setRecording}
         loading={loading}
         setSelectedSong={setSelectedSong}
-        fetchSongs={fetchSongs}
+        fetchSongs={debouncedFetchSongs}
         setQuery={setQuery}
         suggestions={suggestions}
         isMobile={isMobile}

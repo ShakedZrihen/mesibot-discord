@@ -74,7 +74,7 @@ export const Topbar = ({ subtitle, showPlaylistPicker }: TopbarProps) => {
                 }}
               >
                 {parties.map((party) => (
-                  <MenuItem key={party._id} value={selectedParty}>
+                  <MenuItem key={party._id} value={JSON.stringify(party)}>
                     {party.title}
                   </MenuItem>
                 ))}
