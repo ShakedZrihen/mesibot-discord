@@ -1,9 +1,10 @@
 import { styled } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GameBoard } from "./GameBoard";
 import { Instructions } from "./Instructions";
-import { useAppContext } from "../../../../../context/useAppContext";
+import { Mode } from "./types";
+import { StorageKeys } from "../../../../../consts/storageKeys";
 
 const StyledContainer = styled("div")`
   display: flex;
@@ -14,19 +15,22 @@ const StyledContainer = styled("div")`
 `;
 
 export const ShemKodView = () => {
-  const [started, setStarted] = useState(false);
-  const { connectedUser, party } = useAppContext();
+  const storageStarted = localStorage.getItem(StorageKeys.SHEMCODE_STARTED) === "true";
+  const [started, setStarted] = useState(storageStarted || false);
   const [searchParams] = useSearchParams();
 
-  const getModeFromQueryParams = () => {
-    const modeParam = searchParams.get("mode");
+  useEffect(() => {
+    localStorage.setItem(StorageKeys.SHEMCODE_STARTED, started.toString());
+  }, [started]);
 
-    if (["player", "host"].includes(modeParam || "")) {
-      return modeParam as "player" | "host";
+  const getModeFromQueryParams = () => {
+    const modeParam = searchParams.get("mode") as Mode;
+
+    if ([Mode.Board, Mode.Map].includes(modeParam || "")) {
+      return modeParam;
     }
 
-    const isHost = connectedUser?.name === party?.host.name;
-    return isHost ? "host" : "player";
+    return Mode.Board;
   };
 
   const mode = getModeFromQueryParams();

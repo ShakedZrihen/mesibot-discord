@@ -1,49 +1,110 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import { CircularProgress, Typography } from "@mui/material";
 import { GameBoardContainer, RowContainer, StyledLoader, WordCard } from "./GameBoard.style";
 import * as mesibotApi from "../../../../../services/mesibotApi";
 import { useAppContext } from "../../../../../context/useAppContext";
+import { Mode } from "./types";
+import { SuccessModal } from "../components/SuccessModal";
 
 interface WordTile {
   word: string;
   group: number | "neutral";
+  isOpen: boolean;
+}
+
+interface GameData {
+  currentRound: number;
+  rounds: { board: WordTile[][]; roundNumber: number }[];
+  winner?: number;
 }
 
 interface GameBoardProps {
-  mode: "host" | "player";
+  mode: Mode;
 }
+
+const getWinner = (board: WordTile[][] | null) => {
+  if (!board) {
+    return null;
+  }
+
+  let blueCardsRemaining = 0;
+  let redCardsRemaining = 0;
+
+  board.forEach((row) => {
+    row.forEach((tile) => {
+      if (!tile.isOpen) {
+        if (tile.group === 1) {
+          blueCardsRemaining++;
+        }
+        if (tile.group === 2) {
+          redCardsRemaining++;
+        }
+      }
+    });
+  });
+
+  if (blueCardsRemaining === 0) {
+    // Blue team wins
+    return 1;
+  }
+  if (redCardsRemaining === 0) {
+    // Red team wins
+    return 2;
+  }
+
+  return null; // No winner yet
+};
 
 export const GameBoard = ({ mode }: GameBoardProps) => {
   const boardRef = useRef<WordTile[][] | null>(null);
-  const revealedTilesRef = useRef<boolean[][] | null>(null);
-  const [, forceRender] = useState(0); // Dummy state to trigger re-render
+  const hasFetchedData = useRef(false);
+  const [, forceRender] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [winner, setWinner] = useState<number | null>(null);
   const { party } = useAppContext();
 
-  useEffect(() => {
-    const start = async () => {
-      if (!boardRef.current) {
-        // Prevent re-fetching if board already exists
-        const response = await mesibotApi.getShemkodBoard(party?._id ?? "");
-        boardRef.current = response.board;
-        revealedTilesRef.current = response.board.map((row: any) => row.map(() => mode === "player")); // Reveal all in player mode
-        forceRender((prev) => prev + 1); // Trigger one-time re-render
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parseResponse = async (response: any) => {
+    const currentRoundIndex = response.currentRound - 1;
+    if (response.rounds[currentRoundIndex]) {
+      boardRef.current = response.rounds[currentRoundIndex].board;
+      const winner = getWinner(boardRef.current);
+      if (winner) {
+        setWinner(winner);
+        setModalOpen(true);
       }
-    };
-
-    if (party?._id) {
-      start();
-    }
-  }, [party, mode]);
-
-  const handleReveal = (rowIndex: number, colIndex: number) => {
-    if (mode === "host" && revealedTilesRef.current) {
-      revealedTilesRef.current[rowIndex][colIndex] = true;
-      forceRender((prev) => prev + 1); // Trigger re-render to reveal the tile
+      forceRender((prev) => prev + 1);
     }
   };
 
-  if (!boardRef.current || !revealedTilesRef.current) {
+  useEffect(() => {
+    const start = async () => {
+      if (!boardRef.current && party?._id && !hasFetchedData.current) {
+        hasFetchedData.current = true;
+        const response: GameData = await mesibotApi.getShemkodBoard(party?._id);
+        parseResponse(response);
+      }
+    };
+
+    start();
+  }, [party?._id]);
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+  };
+
+  const nextRound = async () => {
+    if (party?._id) {
+      hasFetchedData.current = false;
+      boardRef.current = null;
+      setWinner(null);
+      setModalOpen(false);
+      const response = await mesibotApi.nextRoundShemkod(party._id);
+      parseResponse(response);
+    }
+  };
+
+  if (!boardRef.current) {
     return (
       <StyledLoader>
         <CircularProgress />
@@ -58,14 +119,26 @@ export const GameBoard = ({ mode }: GameBoardProps) => {
           {row.map((tile, colIndex) => (
             <WordCard
               key={`${rowIndex}-${colIndex}`}
-              group={revealedTilesRef.current?.[rowIndex][colIndex] ? tile.group : "hidden"} // Show color only if revealed
-              onClick={() => handleReveal(rowIndex, colIndex)}
+              group={mode === "map" ? tile.group : tile.isOpen ? tile.group : "hidden"}
+              onClick={async () => {
+                if (mode !== "map" && !tile.isOpen) {
+                  const response = await mesibotApi.updateShemkodBoard(party?._id || "", rowIndex, colIndex);
+                  parseResponse(response);
+                }
+              }}
             >
               <Typography variant="h6">{tile.word}</Typography>
             </WordCard>
           ))}
         </RowContainer>
       ))}
+
+      <SuccessModal
+        modalOpen={modalOpen}
+        handleModalClose={handleModalClose}
+        nextRound={nextRound}
+        description={`קבוצה ${winner === 2 ? "כחולה" : "אדומה"} ניצחה!`}
+      />
     </GameBoardContainer>
   );
 };
