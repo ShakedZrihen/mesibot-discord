@@ -1,15 +1,16 @@
 import { Request, Response, Router } from "express";
-import { gamesRouter } from "./games";
 import { GameTemplate } from "../../models/GameTemplate";
 import { Party } from "../../models/Party";
 import { playlistService } from "../../services/playlist";
 import { addSongToPlaylist, downvoteSontInPlaylist, getPartyPlaylist, upvoteSongInPlaylist } from "./playlist/playlist";
+import { guessTheSongRouter } from "./games/guess-the-song";
+import { shemcodeRouter } from "./games/shemkod";
 
 export const partyRouter = Router();
 
 partyRouter.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, host, selectedGames } = req.body;
+    const { title, host, games } = req.body;
 
     // Validate request
     if (!title || !host?.name || !host?.avatar) {
@@ -18,7 +19,7 @@ partyRouter.post("/", async (req: Request, res: Response): Promise<void> => {
     }
 
     // Fetch selected game templates
-    const gameTemplates = await GameTemplate.find({ _id: { $in: selectedGames } });
+    const gameTemplates = await GameTemplate.find({ _id: { $in: games } });
 
     // Clone games for the party
     const gameInstances = gameTemplates.map((template) => ({
@@ -63,7 +64,6 @@ partyRouter.get("/", async (req: Request, res: Response): Promise<void> => {
 partyRouter.get("/games", async (req, res) => {
   try {
     const games = await GameTemplate.find();
-    console.log(games);
     res.status(200).json(games);
   } catch (error) {
     console.error("Error fetching games:", error);
@@ -129,4 +129,6 @@ partyRouter.post("/:partyId/join", async (req: Request, res: Response): Promise<
   }
 });
 
-partyRouter.use("/:partyId/games", gamesRouter);
+partyRouter.use("/:partyId/games/guess-the-song", guessTheSongRouter);
+
+partyRouter.use("/:partyId/games/shemkod", shemcodeRouter);
