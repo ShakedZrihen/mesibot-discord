@@ -38,11 +38,10 @@ export const JoinPartyView = () => {
     setError("");
     try {
       if (connectedUser) {
-        await mesibotApi.joinParty(partyId, connectedUser);
+        const party = await mesibotApi.joinParty(partyId, connectedUser);
+        setParty(party);
+        navigate(`/${partyId}`);
       }
-      const party = await mesibotApi.getParty(partyId);
-      setParty(party);
-      navigate(`/${partyId}/playlist`);
     } catch (error) {
       console.error("❌ Error joining party:", error);
       setError("Unable to join party. Please check the party code and try again.");
