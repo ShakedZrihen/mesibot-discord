@@ -1,4 +1,4 @@
-import { GuessTheSongView } from "../pages/Home/views/GuessTheSong/GuessTheSongView";
+import { GuessTheSongView } from "../pages/Home/views/GameView/GuessTheSong/GuessTheSongView";
 import { PlaylistView } from "../pages/Home/views/PlaylistView";
 import { JoinPartyView } from "../pages/Home/views/JoinPartyView";
 import { PartyView } from "../pages/Home/views/PartyView";

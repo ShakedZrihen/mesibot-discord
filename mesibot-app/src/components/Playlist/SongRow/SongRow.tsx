@@ -14,7 +14,7 @@ interface SongRowProps extends SongRowType {
 }
 
 export const SongRow = (props: SongRowProps) => {
-  const { connectedUser, playlistId } = useAppContext();
+  const { connectedUser, playlistId, party } = useAppContext();
   const { number, title, addedBy, _id } = props;
 
   return (
@@ -33,7 +33,7 @@ export const SongRow = (props: SongRowProps) => {
           sx={{ color: Colors.goodGreen }}
           size="small"
           onClick={() => {
-            upvoteSong(_id, connectedUser, playlistId);
+            upvoteSong(party?._id ?? null, _id, connectedUser, playlistId);
           }}
         >
           <ThumbUpIcon fontSize="inherit" />
@@ -42,7 +42,7 @@ export const SongRow = (props: SongRowProps) => {
           size="small"
           sx={{ color: Colors.vividPink }}
           onClick={() => {
-            downvoteSong(_id, connectedUser, playlistId);
+            downvoteSong(party?._id ?? null, _id, connectedUser, playlistId);
           }}
         >
           <ThumbDownIcon fontSize="inherit" />

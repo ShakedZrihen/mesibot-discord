@@ -1,19 +1,6 @@
-import { Button, styled } from "@mui/material";
-import { Colors } from "../../../../consts/colors";
-
-const PageTitle = styled("h2")`
-  direction: rtl;
-`;
-
-const Content = styled("p")`
-  text-align: center;
-  margin: 0 2vw 2vw 2vw;
-  direction: rtl;
-`;
-
-const Bold = styled("span")`
-  font-weight: bold;
-`;
+import { Button } from "@mui/material";
+import { Bold, Content, PageTitle } from "../../view.style";
+import { Colors } from "../../../../../consts/colors";
 
 interface InstructionsProps {
   setStarted: (started: boolean) => void;

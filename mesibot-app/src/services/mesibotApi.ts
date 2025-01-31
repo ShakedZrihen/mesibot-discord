@@ -10,7 +10,9 @@ const API_PATHS = {
   downvote: "/playlist/downvote",
   addSong: "/playlist/add-song",
   getGuessSong: "/games/guess-the-song/song",
-  getShemkodBoard: "/games/shemkod/start"
+  getShemkodBoard: "/games/shemkod/start",
+  updateShemkodBoard: "/games/shemkod/update-word",
+  nextRoundShemkod: "/games/shemkod/next-round"
 };
 
 export const searchSongs = async (searchTerm: string) => {
@@ -125,6 +127,14 @@ export const getShemkodBoard = async (partyId: string) => {
   return response.data;
 };
 
+export const updateShemkodBoard = async (partyId: string, rowIndex: number, colIndex: number) => {
+  const response = await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.updateShemkodBoard}`, {
+    rowIndex,
+    colIndex
+  });
+  return response.data;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const createParty = async ({ title, games, host }: { title: string; games: any; host: User }) => {
   const response = await axios.post(`${BASE_URL}${API_PATHS.parties}`, {
@@ -137,5 +147,10 @@ export const createParty = async ({ title, games, host }: { title: string; games
 
 export const getAvailableGames = async () => {
   const response = await axios.get(`${BASE_URL}${API_PATHS.parties}/games`);
+  return response.data;
+};
+
+export const nextRoundShemkod = async (partyId: string) => {
+  const response = await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.nextRoundShemkod}`);
   return response.data;
 };

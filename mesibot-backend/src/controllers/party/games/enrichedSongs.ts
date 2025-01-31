@@ -805,54 +805,6 @@ export default [
     ]
   },
   {
-    songName: "All of Me",
-    artist: "John Legend",
-    engLyrics: [
-      "Even when I lose I'm winning",
-      "Cause I give you all, all of me",
-      "And you give me all, all of you",
-      "Cause all of me Loves all of you"
-    ],
-    hebLyrics: [
-      "אפילו כשאני מפסיד אני מנצח",
-      "כי אני נותן לך הכל, את כלי",
-      "ואתה נותן לי הכל, את כלך",
-      "כי כלי אוהב את כלך"
-    ]
-  },
-  {
-    songName: "Uptown Funk",
-    artist: "Mark Ronson featuring Bruno Mars",
-    engLyrics: [
-      "'Cause Uptown Funk gon' give it to you",
-      "Saturday night and we in the spot",
-      "Don't believe me just watch (come on!)",
-      "Uptown Funk you up, Uptown Funk you up"
-    ],
-    hebLyrics: [
-      "'כי אפטאון פאנק הולך לתת לך את זה",
-      "שבת בלילה ואנחנו במקום",
-      "אל תאמין לי, רק תראה (בוא על!)",
-      "אפטאון פאנק משדרג אותך, אפטאון פאנק משדרג אותך"
-    ]
-  },
-  {
-    songName: "See You Again",
-    artist: "Wiz Khalifa featuring Charlie Puth",
-    engLyrics: [
-      "First you both go out your way",
-      "And the vibe is feeling strong",
-      "And what's small turn to a friendship, A friendship turn to a bond",
-      "And that bond will never be broken, The love will never get lost"
-    ],
-    hebLyrics: [
-      "ראשית, שניכם הולכים לדרככם",
-      "והאווירה מרגישה חזקה",
-      "ומה שהיה קטן הפך לידידות, ידידות הפכה לקשר",
-      "והקשר הזה לעולם לא ישבר, האהבה לעולם לא תלך לאיבוד"
-    ]
-  },
-  {
     songName: "Love Yourself",
     artist: "Justin Bieber",
     engLyrics: [
@@ -885,17 +837,6 @@ export default [
     ]
   },
   {
-    songName: "One Dance",
-    artist: "Drake featuring Wizkid and Kyla",
-    engLyrics: [
-      "With a Hennessy in my hand",
-      "One more time 'fore I go",
-      "Higher powers taking a hold on me",
-      "Baby, I like your style"
-    ],
-    hebLyrics: ["עם חנסי בידי", "עוד פעם לפני שאני הולך", "כוחות עליונים משתלטים עלי", "תינוק, אני אוהב את הסגנון שלך"]
-  },
-  {
     songName: "Work",
     artist: "Rihanna featuring Drake",
     engLyrics: [
@@ -925,22 +866,6 @@ export default [
       "אנחנו יוצאים לדייט הראשון שלנו",
       "אתה ואני חסכניים, אז תלך לאכול כמה שאתה יכול",
       "אני מאוהב בצורתך"
-    ]
-  },
-  {
-    songName: "Despacito",
-    artist: "Luis Fonsi and Daddy Yankee featuring Justin Bieber",
-    engLyrics: [
-      "Slowly, I want to breathe your neck slowly",
-      "Let me tell you things in your ears",
-      "So that you remember if you're not with me, Despacito",
-      "I want to undress you in kisses slowly"
-    ],
-    hebLyrics: [
-      "לאט, אני רוצה לנשום את צווארך לאט",
-      "תן לי לספר לך דברים באוזנייך",
-      "כדי שתזכור אם אתה לא איתי, דספסיטו",
-      "אני רוצה לחשוף אותך בנשיקות לאט"
     ]
   },
   {

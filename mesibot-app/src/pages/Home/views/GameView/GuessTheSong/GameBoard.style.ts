@@ -1,7 +1,8 @@
 import { Button, darken, styled } from "@mui/material";
-import { Colors } from "../../../../consts/colors";
+import { Content } from "../../view.style";
+import { Colors } from "../../../../../consts/colors";
 
-export const StyledLine = styled("div")<{ showLines: number; index: number }>`
+export const StyledLine = styled(Content)<{ showLines: number; index: number }>`
   font-size: 24px;
   filter: ${({ index, showLines }) => (index >= showLines ? "blur(5px)" : "none")};
   transition: "filter 0.3s ease";
