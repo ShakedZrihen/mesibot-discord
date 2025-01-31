@@ -30,9 +30,7 @@ export function BuzzerView() {
 
   return (
     <StyledContainer>
-
-      <BuzzerButton selectedColorValue={Colors.lightRed} onPlay={handlePlay} />
-      
+      <BuzzerButton selectedColorValue={Colors.pinkier} onPlay={handlePlay} />
     </StyledContainer>
   );
 }

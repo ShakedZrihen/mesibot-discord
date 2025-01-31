@@ -24,7 +24,7 @@ export const games: Game[] = [
   },
   {
     id: "click-the-buzzer",
-    name: "לחץ על הכפתור",
+    name: "באזר",
     component: BuzzerView,
     completed: false
   }
