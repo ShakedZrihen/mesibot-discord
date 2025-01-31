@@ -3,7 +3,7 @@ import { CircularProgress, Typography } from "@mui/material";
 import { GameBoardContainer, RowContainer, StyledLoader, WordCard } from "./GameBoard.style";
 import * as mesibotApi from "../../../../../services/mesibotApi";
 import { useAppContext } from "../../../../../context/useAppContext";
-import { Mode } from "./types";
+import { Groups, Mode } from "./types";
 import { SuccessModal } from "../components/SuccessModal";
 
 interface WordTile {
@@ -33,10 +33,10 @@ const getWinner = (board: WordTile[][] | null) => {
   board.forEach((row) => {
     row.forEach((tile) => {
       if (!tile.isOpen) {
-        if (tile.group === 1) {
+        if (tile.group === Groups.Red) {
           blueCardsRemaining++;
         }
-        if (tile.group === 2) {
+        if (tile.group === Groups.Blue) {
           redCardsRemaining++;
         }
       }

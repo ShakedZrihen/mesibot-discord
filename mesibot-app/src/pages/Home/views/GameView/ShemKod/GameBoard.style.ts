@@ -1,5 +1,6 @@
 import { Box, Button, darken, Paper, styled } from "@mui/material";
 import { Colors } from "../../../../../consts/colors";
+import { Groups } from "./types";
 
 export const StyledLine = styled("div")<{ showLines: number; index: number }>`
   font-size: 24px;
@@ -72,9 +73,9 @@ export const WordCard = styled(Paper)<{ group: number | "neutral" | "hidden" }>`
   background-color: ${({ group }) =>
     group === "hidden"
       ? Colors.veryLightGray // Gray hidden color in host mode
-      : group === 1
+      : group === Groups.Red
       ? Colors.lightRed // Red for group 1
-      : group === 2
+      : group === Groups.Blue
       ? Colors.lightBlue // Blue for group 2
       : Colors.neutral}; // Neutral color
 
