@@ -26,7 +26,7 @@ export const GameView = () => {
       <Typography variant="h4" gutterBottom>
         {party?.title}
       </Typography>
-      
+
       <List>
         {games.map((game) => (
           <StyledListItem key={game.id} onClick={() => handleGameClick(game)}>

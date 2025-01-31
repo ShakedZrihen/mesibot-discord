@@ -9,8 +9,8 @@ import {
   SkipButton,
   StyledLine
 } from "./GameBoard.style";
-import * as mesibotApi from "../../../../services/mesibotApi";
-import { useAppContext } from "../../../../context/useAppContext";
+import * as mesibotApi from "../../../../../services/mesibotApi";
+import { useAppContext } from "../../../../../context/useAppContext";
 
 interface GussSong {
   songName: string;

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GameBoard } from "./GameBoard";
 import { Instructions } from "./Instructions";
-import { useAppContext } from "../../../../context/useAppContext";
+import { useAppContext } from "../../../../../context/useAppContext";
 
 const StyledContainer = styled("div")`
   display: flex;

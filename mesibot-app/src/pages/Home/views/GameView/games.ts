@@ -1,5 +1,5 @@
-import { GuessTheSongView } from "../GuessTheSong";
-import { ShemKodView } from "../ShemKod";
+import { GuessTheSongView } from "./GuessTheSong";
+import { ShemKodView } from "./ShemKod";
 
 export interface Game {
   id: string;

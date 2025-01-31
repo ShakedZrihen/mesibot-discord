@@ -2,8 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { CircularProgress, Typography } from "@mui/material";
 import { GameBoardContainer, RowContainer, StyledLoader, WordCard } from "./GameBoard.style";
-import * as mesibotApi from "../../../../services/mesibotApi";
-import { useAppContext } from "../../../../context/useAppContext";
+import * as mesibotApi from "../../../../../services/mesibotApi";
+import { useAppContext } from "../../../../../context/useAppContext";
 
 interface WordTile {
   word: string;
