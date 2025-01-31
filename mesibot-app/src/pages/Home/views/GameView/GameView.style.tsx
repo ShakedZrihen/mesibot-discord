@@ -1,5 +1,13 @@
 import { Box, IconButton, ListItem, Modal, styled } from "@mui/material";
 
+export const StyledGameView = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: "3vh",
+  flexDirection: "column"
+});
+
 export const StyledModal = styled(Modal)`
   display: flex;
   align-items: center;

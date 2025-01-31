@@ -9,7 +9,8 @@ const API_PATHS = {
   upvote: "/playlist/upvote",
   downvote: "/playlist/downvote",
   addSong: "/playlist/add-song",
-  getGuessSong: "/games/guess-the-song/song"
+  getGuessSong: "/games/guess-the-song/song",
+  getShemkodBoard: '/games/shemkod/start'
 };
 
 export const searchSongs = async (searchTerm: string) => {
@@ -116,5 +117,10 @@ export const joinParty = async (partyId: string, connectedUser: User) => {
 
 export const getSongForGuess = async (partyId: string) => {
   const response = await axios.get(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.getGuessSong}`);
+  return response.data;
+};
+
+export const getShemkodBoard = async (partyId: string) => {
+  const response = await axios.get(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.getShemkodBoard}`);
   return response.data;
 };

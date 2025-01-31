@@ -1,0 +1,1 @@
+export { ShemKodView } from "./ShemKodView";

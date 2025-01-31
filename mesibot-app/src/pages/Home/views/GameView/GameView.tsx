@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Box, List, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { List, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { StyledListItem, StyledModal, ModalContent, CloseButton } from "./GameView.style";
+import { StyledListItem, StyledModal, ModalContent, CloseButton, StyledGameView } from "./GameView.style";
 import { Game, games } from "./games";
 import { useAppContext } from "../../../../context/useAppContext";
 
@@ -22,18 +22,11 @@ export const GameView = () => {
   const GameComponent = selectedGame?.component;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: "3vh",
-        flexDirection: "column"
-      }}
-    >
+    <StyledGameView>
       <Typography variant="h4" gutterBottom>
         {party?.title}
       </Typography>
+      
       <List>
         {games.map((game) => (
           <StyledListItem key={game.id} onClick={() => handleGameClick(game)}>
@@ -54,6 +47,6 @@ export const GameView = () => {
           {GameComponent && <GameComponent />}
         </ModalContent>
       </StyledModal>
-    </Box>
+    </StyledGameView>
   );
 };
