@@ -2,7 +2,8 @@ import { BASE_DOMAIN } from "../consts/general";
 
 export enum EventTypes {
   PLAYLIST_UPDATE = "playlistUpdate",
-  BUZZER_PRESSED = "buzzerPressed"
+  BUZZER_PRESSED = "buzzerPressed",
+  BUZZER_MODAL_CLOSED = "buzzerPressed"
 }
 
 export class WebSocketService {

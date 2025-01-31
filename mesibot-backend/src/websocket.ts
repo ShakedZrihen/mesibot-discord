@@ -9,6 +9,17 @@ interface PlaylistUpdate {
   };
 }
 
+interface BuzzerClicked {
+  type: "buzzerPressed";
+
+  payload: {
+    user: {
+      name: string, 
+      avatar: string
+    }
+  };
+}
+
 // TODO: create new update type like above ^ with payload: {user: {name, avatar}}
 
 class WebSocketManager {
@@ -81,7 +92,24 @@ class WebSocketManager {
     });
   }
 
-  // notifyBuzzerPressed, samelike notifyPlaylistUpdate but send only { user } in update
+
+  public notifyBuzzerPressed(partyId: string, user: { name: string, avatar: string}) {
+    const connections = this.partiesConnections.get(partyId);
+    if (!connections) {
+      return;
+    }
+
+    const update: BuzzerClicked = {
+      type: "buzzerPressed",
+      payload: { user }
+    };
+
+    connections.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(update));
+      }
+    });
+  }
 }
 
 export default WebSocketManager;

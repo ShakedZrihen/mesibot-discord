@@ -161,6 +161,10 @@ export const pressTheBuzzer = async (partyId: string, user: User | null) => {
   if (!user) {
     return;
   }
+  
+  if(!partyId) {
+    return;
+  }
 
-  await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.pressTheBuzzer}`, { user });
+  await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.pressTheBuzzer}`, { user, partyId });
 };

@@ -13,7 +13,7 @@ const StyledContainer = styled("div")`
 `;
 
 
-export function BuzzerView() {
+export function BuzzerView({ small = false }: { small?: boolean }) {
 
   const audio = useRef<HTMLAudioElement | null>(null);
 
@@ -30,7 +30,7 @@ export function BuzzerView() {
 
   return (
     <StyledContainer>
-      <BuzzerButton selectedColorValue={Colors.pinkier} onPlay={handlePlay} />
+      <BuzzerButton selectedColorValue={Colors.pinkier} onPlay={handlePlay} small={small} />
     </StyledContainer>
   );
 }
