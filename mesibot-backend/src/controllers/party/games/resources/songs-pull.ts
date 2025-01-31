@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
-import { OPENAI_API_KEY } from "../../../env";
-import { guessTheSongPrompt } from "./prompts/guessTheSongPropmt";
-import enrichedSongs, { SongLyrics } from "./enrichedSongs";
+import { OPENAI_API_KEY } from "../../../../env";
+import { guessTheSongPrompt } from "../prompts/guessTheSongPropmt";
+import enrichedSongs, { SongLyrics } from "../enrichedSongs";
 
 interface SongInfo {
   year: number;

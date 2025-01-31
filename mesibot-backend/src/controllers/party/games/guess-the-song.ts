@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getRandomSong } from "./songs-pull";
+import { getRandomSong } from "./resources/songs-pull";
 
 export const guessTheSongRouter = Router();
 
