@@ -1,9 +1,8 @@
-import { BASE_DOMAIN } from "../consts/general";
+import { BASE_URL } from "../consts/general";
 import { User } from "../context/AppContext";
 import { Song } from "../types/playlist";
 import axios from "axios";
 
-const BASE_URL = `http://${BASE_DOMAIN}`;
 const API_PATHS = {
   songs: "/api/songs",
   parties: "/api/party",
