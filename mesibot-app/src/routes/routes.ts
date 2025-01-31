@@ -31,6 +31,12 @@ export const routes: RouteConfig[] = [
     showPlaylistPicker: true
   },
   {
+    component: BuzzerView,
+    path: "/:partyId/games/click-the-buzzer",
+    name: "Guess the Song",
+    showPlaylistPicker: true
+  },
+  {
     component: PartyView,
     path: "/:partyId",
     name: ""
@@ -45,12 +51,6 @@ export const routes: RouteConfig[] = [
   {
     component: GuessTheSongView,
     path: "/games/guess-the-song",
-    name: "Guess the Song",
-    showPlaylistPicker: true
-  },
-  {
-    component: BuzzerView,
-    path: "/games/click-the-buzzer",
     name: "Guess the Song",
     showPlaylistPicker: true
   }
