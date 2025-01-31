@@ -1,37 +1,17 @@
-import { Box, Typography, TextField, Button } from "@mui/material";
+import { Typography, TextField, Button } from "@mui/material";
 import { Colors } from "../../../consts/colors";
-import { styled } from "@mui/material/styles";
 import { useState } from "react";
 import * as mesibotApi from "../../../services/mesibotApi";
 import { useAppContext } from "../../../context/useAppContext";
 import { useNavigate } from "react-router-dom";
-
-const StyledBox = styled(Box)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: calc(100vh - 64px); // Subtract Topbar height
-  padding: 2rem;
-  gap: 2rem;
-`;
-
-const InputContainer = styled(Box)`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-  max-width: 500px;
-
-  ${({ theme }) => theme.breakpoints.up("sm")} {
-    flex-direction: row;
-  }
-`;
+import { CreatePartyModal } from "./CreatePartyModal";
+import { StyledBox, InputContainer } from "./JoinPartyView.style";
 
 export const JoinPartyView = () => {
   const { setParty, connectedUser } = useAppContext();
   const [partyId, setPartyId] = useState("");
   const [error, setError] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleJoinParty = async () => {
@@ -91,6 +71,7 @@ export const JoinPartyView = () => {
       </InputContainer>
       <Button
         variant="outlined"
+        onClick={() => setIsCreateModalOpen(true)}
         sx={{
           borderColor: Colors.pink,
           color: Colors.pink,
@@ -102,6 +83,7 @@ export const JoinPartyView = () => {
       >
         Create Party
       </Button>
+      <CreatePartyModal open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
     </StyledBox>
   );
 };
