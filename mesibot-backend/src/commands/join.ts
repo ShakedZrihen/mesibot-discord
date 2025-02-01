@@ -16,7 +16,8 @@ export const join = async ({ req, res }: interactionPayload) => {
   connection = joinVoiceChannel({
     channelId: member.voice.channel.id,
     guildId: interaction.guild_id,
-    adapterCreator: guild?.voiceAdapterCreator as any
+    adapterCreator: guild?.voiceAdapterCreator as any,
+    debug: true,
   });
 
   return res.json({ type: ResponseType.Immediate, data: { content: `🎤 Joined ${member.voice.channel.name}` } });

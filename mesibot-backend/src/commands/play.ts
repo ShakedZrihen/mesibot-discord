@@ -34,7 +34,8 @@ export const play = async ({ req, res }: interactionPayload) => {
     connection = joinVoiceChannel({
       channelId: member.voice.channel.id,
       guildId: interaction.guild_id,
-      adapterCreator: guild?.voiceAdapterCreator as any
+      adapterCreator: guild?.voiceAdapterCreator as any,
+      debug: true
     });
 
     connection.subscribe(player);
