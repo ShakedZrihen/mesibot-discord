@@ -31,7 +31,7 @@ export function BuzzerButton({ selectedColorValue, onPlay, small }: BuzzerButton
     }
     console.log("Pressing buzzer for", connectedUser.name, "in party", party._id);
 
-    pressTheBuzzer(party?._id, connectedUser)
+    pressTheBuzzer(party?._id, connectedUser, true)
   };
 
   const onKeyDown = (e: KeyboardEvent) => {

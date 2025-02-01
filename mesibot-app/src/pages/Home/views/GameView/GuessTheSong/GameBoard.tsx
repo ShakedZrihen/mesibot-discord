@@ -15,7 +15,7 @@ import { SuccessModal } from "../components/SuccessModal";
 import { EventTypes } from "../../../../../services/websocketService";
 import { BuzzerView } from '../../BuzzerView/BuzzerView';
 import { BuzzerModal } from '../../BuzzerView/BuzzerModal';
-
+import { pressTheBuzzer } from "../../../../../services/mesibotApi" 
 interface GussSong {
   songName: string;
   artist: string;
@@ -32,7 +32,6 @@ type User = {
 type Clicker = {
   name: string;
   avatar: string;
-  
 };
 
 export const GameBoard = () => {
@@ -52,15 +51,19 @@ export const GameBoard = () => {
   
   // TODO: add function that will get user:User as input and will popup the "Button Pressed" Modal
 
-  console.log("connectedUser", connectedUser)
-  const BuzzerClicked = (user: User) => {
-    console.log("Clicked By", user.user.name)
-    if(!user) {
+  const BuzzerClicked = ({ user, showModal }: { user: Clicker; showModal: boolean }) => {
+
+    console.log("Clicked By", user, showModal);
+    if (!user) {
       return;
     }
-    setBuzzermodalOpen(true);
-    setClicker(user.user)
+
+    setBuzzermodalOpen(showModal);
+    setClicker(user);
   };
+
+  // console.log("clickerniga", clicker)
+  
   useEffect(() => {
 
     if (!party?._id) {
@@ -99,18 +102,19 @@ export const GameBoard = () => {
 
   const handleGuess = () => {
     if (currentSong && guess.toLowerCase() === currentSong.songName.toLowerCase()) {
-      nextRound(true)
+      setModalOpen(true)
+    } else {
+      handleModalClose()
     }
-    nextRound(false)
-    setBuzzermodalOpen(false);
-    handleModalClose();
   };
 
   const handleModalClose = () => {
+    pressTheBuzzer(party?._id || "", clicker, false);
     setModalOpen(false);
   };
 
   const nextRound = (guessed: boolean) => {
+    console.log("Guessed: ", guessed)
     setRound((prev) => prev + 1);
     setShowLines(1);
     setGuess("");

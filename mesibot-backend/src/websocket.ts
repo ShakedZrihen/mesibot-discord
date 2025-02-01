@@ -16,11 +16,10 @@ interface BuzzerClicked {
     user: {
       name: string, 
       avatar: string
-    }
+    },
+    showModal: boolean
   };
 }
-
-// TODO: create new update type like above ^ with payload: {user: {name, avatar}}
 
 class WebSocketManager {
   private wss: WebSocketServer;
@@ -93,7 +92,7 @@ class WebSocketManager {
   }
 
 
-  public notifyBuzzerPressed(partyId: string, user: { name: string, avatar: string}) {
+  public notifyBuzzerPressed(partyId: string, user: { name: string, avatar: string}, showModal: boolean) {
     const connections = this.partiesConnections.get(partyId);
     if (!connections) {
       return;
@@ -101,7 +100,7 @@ class WebSocketManager {
 
     const update: BuzzerClicked = {
       type: "buzzerPressed",
-      payload: { user }
+      payload: { user, showModal }
     };
 
     connections.forEach((client) => {

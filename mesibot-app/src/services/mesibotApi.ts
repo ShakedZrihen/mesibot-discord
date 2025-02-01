@@ -157,14 +157,16 @@ export const nextRoundShemkod = async (partyId: string) => {
   return response.data;
 };
 
-export const pressTheBuzzer = async (partyId: string, user: User | null) => {
+export const pressTheBuzzer = async (partyId: string, user: User | null, showModal: boolean) => {
   if (!user) {
+    console.log("no User", user)
     return;
   }
   
   if(!partyId) {
+    console.log("no partyId", partyId)
     return;
   }
 
-  await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.pressTheBuzzer}`, { user, partyId });
+  await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.pressTheBuzzer}`, { user, partyId, showModal });
 };
