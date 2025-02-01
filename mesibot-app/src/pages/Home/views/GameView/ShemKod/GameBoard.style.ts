@@ -1,5 +1,6 @@
 import { Box, Button, darken, Paper, styled } from "@mui/material";
 import { Colors } from "../../../../../consts/colors";
+import { Groups } from "./types";
 
 export const StyledLine = styled("div")<{ showLines: number; index: number }>`
   font-size: 24px;
@@ -45,16 +46,32 @@ export const GameBoardContainer = styled(Box)`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 80vw;
+  width: 100%;
   height: 80vh;
-  gap: 2rem; // 2rem space between rows
+  gap: 1vw; // 2rem space between rows
 `;
 
 export const RowContainer = styled(Box)`
   display: flex;
   justify-content: center;
-  gap: 2rem; // 2rem padding between cards
+  gap: 1vw; // 2rem padding between cards
   width: 100%;
+`;
+export const RemainingCardsContainer = styled(Box)`
+  display: flex;
+  justify-content: space-around;
+  margin: 1rem 0;
+  width: 100%;
+`;
+export const RemainingCards = styled(Box)<{ group: string}>`
+  display: flex;
+  justify-content: center;
+  width: 40%;
+  background-color: ${({group}) => (group === "red" ? Colors.lightRed : Colors.lightBlue)};
+  text-align: center;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
 `;
 
 export const WordCard = styled(Paper)<{ group: number | "neutral" | "hidden" }>`
@@ -62,7 +79,8 @@ export const WordCard = styled(Paper)<{ group: number | "neutral" | "hidden" }>`
   justify-content: center;
   align-items: center;
   width: 18%; // Makes sure 5 cards fit in a row
-  height: 100px; // Bigger cards
+  max-height: 100px;
+  height: 13vw; 
   text-align: center;
   font-weight: bold;
   border-radius: 8px;
@@ -72,14 +90,19 @@ export const WordCard = styled(Paper)<{ group: number | "neutral" | "hidden" }>`
   background-color: ${({ group }) =>
     group === "hidden"
       ? Colors.veryLightGray // Gray hidden color in host mode
-      : group === 1
+      : group === Groups.Red
       ? Colors.lightRed // Red for group 1
-      : group === 2
+      : group === Groups.Blue
       ? Colors.lightBlue // Blue for group 2
       : Colors.neutral}; // Neutral color
 
   &:hover {
     filter: brightness(90%);
+  }
+  .MuiTypography-root {
+    font-size: clamp(0.5rem, 3vw, 2rem);
+  word-break: break-word;
+  text-align: center;
   }
 `;
 
