@@ -186,18 +186,35 @@ const getAudioStream = async (url: string): Promise<string | null> => {
     })) as any;
 
     if (!videoInfo || !videoInfo.formats) {
+      console.error("❌ No valid formats found in video info.");
       return null;
     }
 
-    let selectedFormat = videoInfo.formats.find((f: any) => f.mimeType.includes("audio/mp4") && f.vcodec === "none");
+    console.log(
+      "📜 Available Formats:",
+      videoInfo.formats.map((f: any) => f.mimeType)
+    );
 
+    // Select an audio-only format (prioritizing mp4/m4a)
+    let selectedFormat = videoInfo.formats.find((f: any) => f.mimeType?.includes("audio/mp4") && f.vcodec === "none");
+
+    // If no mp4/m4a format found, fallback to webm
     if (!selectedFormat) {
-      selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
+      selectedFormat = videoInfo.formats.find((f: any) => f.mimeType?.includes("audio/webm") && f.vcodec === "none");
     }
 
-    console.log(`🎵 Selected Format: ${selectedFormat?.mimeType}`);
+    // If still not found, try any format that has no video codec
+    if (!selectedFormat) {
+      selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none");
+    }
 
-    return selectedFormat ? selectedFormat.url : null;
+    if (!selectedFormat) {
+      console.error("❌ No suitable audio format found.");
+      return null;
+    }
+
+    console.log(`🎵 Selected Format: ${selectedFormat.mimeType}`);
+    return selectedFormat.url;
   } catch (error) {
     console.error("❌ Error fetching audio stream:", error);
     return null;
