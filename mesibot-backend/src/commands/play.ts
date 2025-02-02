@@ -1,52 +1,10 @@
-import axios from "axios";
+import ytdl from "ytdl-core";
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
-
-const YOUTUBEI_API = "https://www.youtube.com/youtubei/v1/player";
-const YOUTUBEI_CLIENT = {
-  clientName: "ANDROID", // Mobile client version tends to work better
-  clientVersion: "18.05.40",
-  androidSdkVersion: 30
-};
-
-/**
- * Fetches an audio URL using YouTube's internal `youtubei` API.
- */
-const fetchYouTubeiAudio = async (videoId: string): Promise<string | null> => {
-  try {
-    const response = await axios.post(
-      YOUTUBEI_API,
-      {
-        videoId,
-        context: { client: YOUTUBEI_CLIENT }
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": "AIzaSyC....", // Your API Key (needed for some requests)
-          "User-Agent": "com.google.android.youtube/18.05.40 (Linux; U; Android 11) gzip"
-        }
-      }
-    );
-
-    if (!response.data.streamingData) {
-      throw new Error("No streaming data found.");
-    }
-
-    const audioFormat = response.data.streamingData.adaptiveFormats.find((format: any) =>
-      format.mimeType.includes("audio/")
-    );
-
-    return audioFormat ? audioFormat.url : null;
-  } catch (error) {
-    console.error("❌ Error fetching audio URL:", (error as any).response?.data || (error as any).message);
-    return null;
-  }
-};
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -142,20 +100,19 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 };
 
 /**
- * Helper function to play an audio file from a given URL.
+ * Helper function to play an audio file from YouTube using `ytdl-core`.
  * Waits until the audio ends before resolving.
  */
 const playAudio = async (player: any, url: string) => {
   try {
-    const videoId = url.split("v=")[1].split("&")[0];
-    const audioUrl = await fetchYouTubeiAudio(videoId);
+    const stream = ytdl(url, {
+      filter: "audioonly",
+      quality: "highestaudio",
+      highWaterMark: 1 << 25 // Prevents buffering issues
+    });
 
-    if (!audioUrl) {
-      throw new Error("No valid audio URL found.");
-    }
-
-    console.log("🎧 Audio URL:", audioUrl);
-    const audioResource = createAudioResource(audioUrl);
+    console.log("🎧 Streaming YouTube audio...");
+    const audioResource = createAudioResource(stream);
     player.play(audioResource);
 
     return new Promise<void>((resolve) => {
@@ -171,15 +128,14 @@ const playAudio = async (player: any, url: string) => {
  */
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    const videoId = url.split("v=")[1].split("&")[0];
-    const audioUrl = await fetchYouTubeiAudio(videoId);
+    const stream = ytdl(url, {
+      filter: "audioonly",
+      quality: "highestaudio",
+      highWaterMark: 1 << 25 // Prevents buffering issues
+    });
 
-    if (!audioUrl) {
-      throw new Error("No valid audio URL found.");
-    }
-
-    console.log("🎧 Audio URL:", audioUrl);
-    const audioResource = createAudioResource(audioUrl);
+    console.log("🎧 Streaming YouTube audio...");
+    const audioResource = createAudioResource(stream);
     player.play(audioResource);
 
     player.once(AudioPlayerStatus.Idle, onEnd);
