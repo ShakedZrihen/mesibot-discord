@@ -1,12 +1,52 @@
+import axios from "axios";
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
-import axios from "axios";
 
 const YOUTUBEI_API = "https://www.youtube.com/youtubei/v1/player";
+const YOUTUBEI_CLIENT = {
+  clientName: "ANDROID", // Mobile client version tends to work better
+  clientVersion: "18.05.40",
+  androidSdkVersion: 30
+};
+
+/**
+ * Fetches an audio URL using YouTube's internal `youtubei` API.
+ */
+const fetchYouTubeiAudio = async (videoId: string): Promise<string | null> => {
+  try {
+    const response = await axios.post(
+      YOUTUBEI_API,
+      {
+        videoId,
+        context: { client: YOUTUBEI_CLIENT }
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": "AIzaSyC....", // Your API Key (needed for some requests)
+          "User-Agent": "com.google.android.youtube/18.05.40 (Linux; U; Android 11) gzip"
+        }
+      }
+    );
+
+    if (!response.data.streamingData) {
+      throw new Error("No streaming data found.");
+    }
+
+    const audioFormat = response.data.streamingData.adaptiveFormats.find((format: any) =>
+      format.mimeType.includes("audio/")
+    );
+
+    return audioFormat ? audioFormat.url : null;
+  } catch (error) {
+    console.error("❌ Error fetching audio URL:", (error as any).response?.data || (error as any).message);
+    return null;
+  }
+};
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -69,12 +109,14 @@ export const play = async ({ req, res }: interactionPayload) => {
  */
 const playSong = async (player: any, playlistId: string, song: { url: string; introUrl?: string }) => {
   try {
+    // ✅ Play the intro first (if available)
     if (song.introUrl) {
       console.log("🎤 Playing intro:", song.introUrl);
       await playAudio(player, song.introUrl);
       console.log("🎶 Intro finished, now playing the actual song...");
     }
 
+    // ✅ Play the main song
     console.log("▶️ Playing song:", song.url);
     await playAudioAndWaitForEnd(player, song.url, async () => {
       console.log("✅ Song finished, playing next...");
@@ -103,9 +145,9 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
  * Helper function to play an audio file from a given URL.
  * Waits until the audio ends before resolving.
  */
-const playAudio = async (player: any, youtubeUrl: string) => {
+const playAudio = async (player: any, url: string) => {
   try {
-    const videoId = extractYouTubeId(youtubeUrl);
+    const videoId = url.split("v=")[1].split("&")[0];
     const audioUrl = await fetchYouTubeiAudio(videoId);
 
     if (!audioUrl) {
@@ -113,7 +155,6 @@ const playAudio = async (player: any, youtubeUrl: string) => {
     }
 
     console.log("🎧 Audio URL:", audioUrl);
-
     const audioResource = createAudioResource(audioUrl);
     player.play(audioResource);
 
@@ -128,9 +169,9 @@ const playAudio = async (player: any, youtubeUrl: string) => {
 /**
  * Helper function to play an audio file and trigger an action when it ends.
  */
-const playAudioAndWaitForEnd = async (player: any, youtubeUrl: string, onEnd: () => void) => {
+const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    const videoId = extractYouTubeId(youtubeUrl);
+    const videoId = url.split("v=")[1].split("&")[0];
     const audioUrl = await fetchYouTubeiAudio(videoId);
 
     if (!audioUrl) {
@@ -138,7 +179,6 @@ const playAudioAndWaitForEnd = async (player: any, youtubeUrl: string, onEnd: ()
     }
 
     console.log("🎧 Audio URL:", audioUrl);
-
     const audioResource = createAudioResource(audioUrl);
     player.play(audioResource);
 
@@ -147,43 +187,4 @@ const playAudioAndWaitForEnd = async (player: any, youtubeUrl: string, onEnd: ()
     console.error("❌ Error playing audio:", error);
     onEnd();
   }
-};
-
-/**
- * Fetches the best low-quality audio format from YouTube's `youtubei` API.
- */
-const fetchYouTubeiAudio = async (videoId: string): Promise<string | null> => {
-  try {
-    const response = await axios.post(YOUTUBEI_API, {
-      videoId,
-      context: {
-        client: {
-          clientName: "ANDROID",
-          clientVersion: "17.31.35"
-        }
-      }
-    });
-
-    const streamingData = response.data.streamingData;
-    if (!streamingData) {
-      throw new Error("No streaming data found.");
-    }
-
-    const audioFormat = streamingData.adaptiveFormats.find((format: any) => format.mimeType.includes("audio/"));
-
-    return audioFormat ? audioFormat.url : null;
-  } catch (error) {
-    console.error("❌ Error fetching audio URL:", error);
-    return null;
-  }
-};
-
-/**
- * Extracts YouTube video ID from a URL.
- */
-const extractYouTubeId = (url: string): string => {
-  const match = url.match(
-    /(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*\/vi\/|vi\/|user\/.*\/u\/\d+\/|.*videos\/|.*\/e\/|.*watch\?.*v=|.*&v=))([^#&?\/\s]{11})/
-  );
-  return match ? match[1] : "";
 };
