@@ -128,10 +128,7 @@ const playAudio = async (player: any, url: string) => {
     const stream = await playdl.stream(url); // ✅ Use renamed import
 
     console.log("🎶 Streaming YouTube audio...");
-    const audioResource = createAudioResource(stream.stream, {
-      inputType: stream.type,
-      inlineVolume: true
-    });
+    const audioResource = createAudioResource(stream.stream);
 
     player.play(audioResource);
 
@@ -152,10 +149,7 @@ const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => voi
     const stream = await playdl.stream(url); // ✅ Use renamed import
 
     console.log("🎶 Streaming YouTube audio...");
-    const audioResource = createAudioResource(stream.stream, {
-      inputType: stream.type,
-      inlineVolume: true
-    });
+    const audioResource = createAudioResource(stream.stream);
 
     player.play(audioResource);
 
