@@ -22,6 +22,7 @@ export const play = async ({ req, res }: interactionPayload) => {
       type: ResponseType.Immediate,
       data: { content: "❌ Please provide a valid playlist ID." }
     });
+
     return;
   }
 
@@ -33,11 +34,13 @@ export const play = async ({ req, res }: interactionPayload) => {
       type: ResponseType.Immediate,
       data: { content: "❌ You must be in a voice channel to use this command." }
     });
+
     return;
   }
 
   try {
     console.log("🔗 Connecting to voice channel...");
+
     connection = joinVoiceChannel({
       channelId: member.voice.channel.id,
       guildId: interaction.guild_id,
@@ -54,14 +57,17 @@ export const play = async ({ req, res }: interactionPayload) => {
     });
 
     const playlist = await playlistService.play(playlistId);
+
     if (!playlist || !playlist.currentPlaying) {
       throw new Error("No valid song found in the playlist.");
     }
 
     console.log(`🎵 First song: ${playlist.currentPlaying.title}`);
+
     await playSong(player, playlistId, playlist.currentPlaying);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
+
     res.json({
       type: ResponseType.Immediate,
       data: { content: "❌ Error playing music." }
@@ -76,26 +82,32 @@ const playSong = async (player: AudioPlayer, playlistId: string, song: { url: st
   try {
     if (song.introUrl) {
       console.log("🎤 Playing intro:", song.introUrl);
-      await playAudioAndWaitForEnd(player, song.introUrl);
+
+      await playAudioAndWait(player, song.introUrl);
+
       console.log("🎶 Intro finished, now playing the actual song...");
     }
 
     console.log("▶️ Playing song:", song.url);
-    await playAudioAndWaitForEnd(player, song.url);
+
+    await playAudioAndWait(player, song.url);
 
     console.log("✅ Song finished, playing next...");
+
     const updatedPlaylist = await playlistService.playNext(playlistId);
 
     if (updatedPlaylist?.currentPlaying) {
-      playSong(player, playlistId, updatedPlaylist.currentPlaying);
+      await playSong(player, playlistId, updatedPlaylist.currentPlaying);
     } else {
       console.log("🎵 Playlist ended.");
     }
   } catch (error) {
     console.error("❌ Error playing song:", error);
+
     const updatedPlaylist = await playlistService.playNext(playlistId);
+
     if (updatedPlaylist?.currentPlaying) {
-      playSong(player, playlistId, updatedPlaylist.currentPlaying);
+      await playSong(player, playlistId, updatedPlaylist.currentPlaying);
       wsManager.notifyPlaylistUpdate(playlistId, updatedPlaylist.queue, updatedPlaylist.currentPlaying);
     } else {
       console.log("🎵 Playlist ended.");
@@ -106,23 +118,38 @@ const playSong = async (player: AudioPlayer, playlistId: string, song: { url: st
 /**
  * Helper function to play an audio file and ensure it fully plays before continuing.
  */
-const playAudioAndWaitForEnd = async (player: AudioPlayer, url: string) => {
+const playAudioAndWait = async (player: AudioPlayer, url: string) => {
   try {
     const audioUrl = await fetchAudioUrl(url);
-    if (!audioUrl) throw new Error("No valid formats found.");
+
+    if (!audioUrl) {
+      throw new Error("No valid formats found.");
+    }
 
     console.log(`🎧 Audio URL: ${audioUrl}`);
+
     const audioResource = createAudioResource(audioUrl);
+
     player.play(audioResource);
 
     return new Promise<void>((resolve) => {
-      const onIdle = () => {
+      const handleIdle = () => {
         console.log("✅ Audio finished.");
-        player.removeListener(AudioPlayerStatus.Idle, onIdle);
+
+        player.removeListener(AudioPlayerStatus.Idle, handleIdle);
         resolve();
       };
 
-      player.once(AudioPlayerStatus.Idle, onIdle);
+      const handleError = (error: Error) => {
+        console.error("❌ Error during playback:", error);
+
+        player.removeListener(AudioPlayerStatus.Idle, handleIdle);
+        player.removeListener("error", handleError);
+        resolve();
+      };
+
+      player.once(AudioPlayerStatus.Idle, handleIdle);
+      player.once("error", handleError);
     });
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -148,9 +175,12 @@ const fetchAudioUrl = async (url: string): Promise<string | null> => {
       ]
     })) as any;
 
-    if (!videoInfo || !videoInfo.formats) return null;
+    if (!videoInfo || !videoInfo.formats) {
+      return null;
+    }
 
     let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);
+
     if (!selectedFormat) {
       selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
     }
@@ -158,6 +188,7 @@ const fetchAudioUrl = async (url: string): Promise<string | null> => {
     return selectedFormat ? selectedFormat.url : null;
   } catch (error) {
     console.error("❌ Error fetching audio URL:", error);
+
     return null;
   }
 };
