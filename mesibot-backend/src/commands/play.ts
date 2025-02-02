@@ -5,6 +5,7 @@ import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
+import { readFileSync } from "fs";
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -51,6 +52,13 @@ export const play = async ({ req, res }: interactionPayload) => {
       throw new Error("No valid song found in the playlist.");
     }
 
+    const cookies = readFileSync("./cookies.txt", "utf8");
+
+    playdl.setToken({
+      youtube: {
+        cookie: cookies
+      }
+    });
     // ✅ Play the song (including intro if available)
     await playSong(player, playlistId, playlist.currentPlaying);
   } catch (error) {
