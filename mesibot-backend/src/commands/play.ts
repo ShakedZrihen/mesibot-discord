@@ -1,4 +1,4 @@
-import ytdl from "ytdl-core";
+import ytdl from "ytdl-core-discord";
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
@@ -100,12 +100,12 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 };
 
 /**
- * Helper function to play an audio file from YouTube using `ytdl-core`.
+ * Helper function to play an audio file from YouTube using `ytdl-core-discord`.
  * Waits until the audio ends before resolving.
  */
 const playAudio = async (player: any, url: string) => {
   try {
-    const stream = ytdl(url, {
+    const stream = await ytdl(url, {
       filter: "audioonly",
       quality: "highestaudio",
       highWaterMark: 1 << 25 // Prevents buffering issues
@@ -128,7 +128,7 @@ const playAudio = async (player: any, url: string) => {
  */
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    const stream = ytdl(url, {
+    const stream = await ytdl(url, {
       filter: "audioonly",
       quality: "highestaudio",
       highWaterMark: 1 << 25 // Prevents buffering issues
