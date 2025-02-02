@@ -129,7 +129,8 @@ const playAudio = async (player: any, url: string) => {
 
     console.log("🎶 Streaming YouTube audio...");
     const audioResource = createAudioResource(stream.stream, {
-      inputType: stream.type
+      inputType: stream.type,
+      inlineVolume: true
     });
 
     player.play(audioResource);
@@ -152,7 +153,8 @@ const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => voi
 
     console.log("🎶 Streaming YouTube audio...");
     const audioResource = createAudioResource(stream.stream, {
-      inputType: stream.type
+      inputType: stream.type,
+      inlineVolume: true
     });
 
     player.play(audioResource);
