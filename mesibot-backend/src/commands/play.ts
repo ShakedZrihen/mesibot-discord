@@ -170,8 +170,7 @@ const fetchAudioUrl = async (url: string): Promise<string | null> => {
       addHeader: [
         "referer: https://www.youtube.com/",
         "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "accept-language: en-US,en;q=0.9",
-        "cookie: CONSENT=PENDING+448;"
+        "accept-language: en-US,en;q=0.9"
       ]
     })) as any;
 
