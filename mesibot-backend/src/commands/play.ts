@@ -1,5 +1,11 @@
 import youtubedl from "youtube-dl-exec";
-import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
+import {
+  createAudioResource,
+  joinVoiceChannel,
+  VoiceConnection,
+  AudioPlayerStatus,
+  AudioPlayer
+} from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
@@ -31,6 +37,7 @@ export const play = async ({ req, res }: interactionPayload) => {
   }
 
   try {
+    console.log("🔗 Connecting to voice channel...");
     connection = joinVoiceChannel({
       channelId: member.voice.channel.id,
       guildId: interaction.guild_id,
@@ -39,20 +46,19 @@ export const play = async ({ req, res }: interactionPayload) => {
     });
 
     connection.subscribe(player);
+    console.log("✅ Connected to voice channel!");
 
     res.json({
       type: ResponseType.Immediate,
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
 
-    // ✅ Get the first song from the playlist
     const playlist = await playlistService.play(playlistId);
-
     if (!playlist || !playlist.currentPlaying) {
       throw new Error("No valid song found in the playlist.");
     }
 
-    // ✅ Play the song (including intro if available)
+    console.log(`🎵 First song: ${playlist.currentPlaying.title}`);
     await playSong(player, playlistId, playlist.currentPlaying);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -66,31 +72,28 @@ export const play = async ({ req, res }: interactionPayload) => {
 /**
  * Plays a song and its intro (if available), then moves to the next song.
  */
-const playSong = async (player: any, playlistId: string, song: { url: string; introUrl?: string }) => {
+const playSong = async (player: AudioPlayer, playlistId: string, song: { url: string; introUrl?: string }) => {
   try {
-    // ✅ Play the intro first (if available)
     if (song.introUrl) {
       console.log("🎤 Playing intro:", song.introUrl);
-      await playAudio(player, song.introUrl);
+      await playAudioAndWaitForEnd(player, song.introUrl);
       console.log("🎶 Intro finished, now playing the actual song...");
     }
 
-    // ✅ Play the main song
     console.log("▶️ Playing song:", song.url);
-    await playAudioAndWaitForEnd(player, song.url, async () => {
-      console.log("✅ Song finished, playing next...");
-      const updatedPlaylist = await playlistService.playNext(playlistId);
+    await playAudioAndWaitForEnd(player, song.url);
 
-      if (updatedPlaylist?.currentPlaying) {
-        playSong(player, playlistId, updatedPlaylist.currentPlaying);
-      } else {
-        console.log("🎵 Playlist ended.");
-      }
-    });
+    console.log("✅ Song finished, playing next...");
+    const updatedPlaylist = await playlistService.playNext(playlistId);
+
+    if (updatedPlaylist?.currentPlaying) {
+      playSong(player, playlistId, updatedPlaylist.currentPlaying);
+    } else {
+      console.log("🎵 Playlist ended.");
+    }
   } catch (error) {
     console.error("❌ Error playing song:", error);
     const updatedPlaylist = await playlistService.playNext(playlistId);
-
     if (updatedPlaylist?.currentPlaying) {
       playSong(player, playlistId, updatedPlaylist.currentPlaying);
       wsManager.notifyPlaylistUpdate(playlistId, updatedPlaylist.queue, updatedPlaylist.currentPlaying);
@@ -101,40 +104,28 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 };
 
 /**
- * Helper function to play an audio file from a given URL.
- * Waits until the audio ends before resolving.
+ * Helper function to play an audio file and ensure it fully plays before continuing.
  */
-const playAudio = async (player: any, url: string) => {
+const playAudioAndWaitForEnd = async (player: AudioPlayer, url: string) => {
   try {
-    const videoInfo = await fetchAudioUrl(url);
-    if (!videoInfo) throw new Error("No valid formats found.");
+    const audioUrl = await fetchAudioUrl(url);
+    if (!audioUrl) throw new Error("No valid formats found.");
 
-    const audioResource = createAudioResource(videoInfo);
+    console.log(`🎧 Audio URL: ${audioUrl}`);
+    const audioResource = createAudioResource(audioUrl);
     player.play(audioResource);
 
     return new Promise<void>((resolve) => {
-      player.once(AudioPlayerStatus.Idle, resolve);
+      const onIdle = () => {
+        console.log("✅ Audio finished.");
+        player.removeListener(AudioPlayerStatus.Idle, onIdle);
+        resolve();
+      };
+
+      player.once(AudioPlayerStatus.Idle, onIdle);
     });
   } catch (error) {
     console.error("❌ Error playing audio:", error);
-  }
-};
-
-/**
- * Helper function to play an audio file and trigger an action when it ends.
- */
-const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
-  try {
-    const videoInfo = await fetchAudioUrl(url);
-    if (!videoInfo) throw new Error("No valid formats found.");
-
-    const audioResource = createAudioResource(videoInfo);
-    player.play(audioResource);
-
-    player.once(AudioPlayerStatus.Idle, onEnd);
-  } catch (error) {
-    console.error("❌ Error playing audio:", error);
-    onEnd();
   }
 };
 
@@ -159,7 +150,6 @@ const fetchAudioUrl = async (url: string): Promise<string | null> => {
 
     if (!videoInfo || !videoInfo.formats) return null;
 
-    // ✅ Pick the lowest quality audio format
     let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);
     if (!selectedFormat) {
       selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
