@@ -129,30 +129,32 @@ const playAudioAndWait = async (player: AudioPlayer, url: string, onEnd?: () => 
     }
 
     console.log("🎶 Successfully created audio resource, playing now...");
+
+    // Log if player is actually playing
     player.play(audioResource);
 
-    return new Promise<void>((resolve) => {
-      const handleIdle = () => {
-        console.log("✅ Audio finished.");
-        player.removeListener(AudioPlayerStatus.Idle, handleIdle);
-        if (onEnd) {
-          onEnd();
-        }
-        resolve();
-      };
+    console.log("🔊 Checking playback status...");
 
-      const handleError = (error: Error) => {
-        console.error("❌ Error during playback:", error);
-        player.removeListener(AudioPlayerStatus.Idle, handleIdle);
-        player.removeListener("error", handleError);
-        if (onEnd) {
-          onEnd();
-        }
-        resolve();
-      };
+    player.on(AudioPlayerStatus.Playing, () => {
+      console.log("▶️ Audio is playing...");
+    });
 
-      player.once(AudioPlayerStatus.Idle, handleIdle);
-      player.once("error", handleError);
+    player.on(AudioPlayerStatus.Buffering, () => {
+      console.log("⏳ Audio is buffering...");
+    });
+
+    player.on(AudioPlayerStatus.Idle, () => {
+      console.log("✅ Audio finished.");
+      if (onEnd) {
+        onEnd();
+      }
+    });
+
+    player.on("error", (error) => {
+      console.error("❌ Error during playback:", error);
+      if (onEnd) {
+        onEnd();
+      }
     });
   } catch (error) {
     console.error("❌ Error playing audio:", error);
