@@ -148,7 +148,7 @@ const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => voi
     console.log("🎧 Fetching audio stream...");
     const stream = await playdl.stream(url); // ✅ Use renamed import
 
-    console.log("🎶 Streaming YouTube audio...");
+    console.log("🎶 Streaming YouTube audio...", stream);
     const audioResource = createAudioResource(stream.stream);
 
     player.play(audioResource);
