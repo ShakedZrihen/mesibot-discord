@@ -52,13 +52,25 @@ export const play = async ({ req, res }: interactionPayload) => {
       throw new Error("No valid song found in the playlist.");
     }
 
-    const cookies = readFileSync("./cookies.txt", "utf8");
+    const rawCookies = readFileSync("./cookies.txt", "utf8");
 
+    // ✅ Convert cookies.txt format into a single string (space-separated)
+    const formattedCookies = rawCookies
+      .split("\n")
+      .filter((line) => !line.startsWith("#") && line.trim() !== "") // Remove comments and empty lines
+      .map((line) => {
+        const parts = line.split("\t"); // Cookies are tab-separated
+        return `${parts[5]}=${parts[6]};`; // Extract cookie name=value pairs
+      })
+      .join(" "); // Convert to a space-separated header
+
+    // ✅ Set token for play-dl with properly formatted cookies
     playdl.setToken({
       youtube: {
-        cookie: cookies
+        cookie: formattedCookies
       }
     });
+
     // ✅ Play the song (including intro if available)
     await playSong(player, playlistId, playlist.currentPlaying);
   } catch (error) {
