@@ -6,13 +6,7 @@ import { player } from "../clients/player";
 import { wsManager } from "..";
 import axios from "axios";
 
-const INVIDIOUS_INSTANCES = [
-  "https://invidious.snopyta.org",
-  "https://vid.puffyan.us",
-  "https://invidious.tiekoetter.com",
-  "https://invidious.privacydev.net",
-  "https://yewtu.be"
-];
+const YOUTUBEI_API = "https://www.youtube.com/youtubei/v1/player";
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -112,7 +106,7 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 const playAudio = async (player: any, youtubeUrl: string) => {
   try {
     const videoId = extractYouTubeId(youtubeUrl);
-    const audioUrl = await fetchAudioUrl(videoId);
+    const audioUrl = await fetchYouTubeiAudio(videoId);
 
     if (!audioUrl) {
       throw new Error("No valid audio URL found.");
@@ -137,7 +131,7 @@ const playAudio = async (player: any, youtubeUrl: string) => {
 const playAudioAndWaitForEnd = async (player: any, youtubeUrl: string, onEnd: () => void) => {
   try {
     const videoId = extractYouTubeId(youtubeUrl);
-    const audioUrl = await fetchAudioUrl(videoId);
+    const audioUrl = await fetchYouTubeiAudio(videoId);
 
     if (!audioUrl) {
       throw new Error("No valid audio URL found.");
@@ -156,27 +150,32 @@ const playAudioAndWaitForEnd = async (player: any, youtubeUrl: string, onEnd: ()
 };
 
 /**
- * Fetches the best low-quality audio format from an Invidious API.
+ * Fetches the best low-quality audio format from YouTube's `youtubei` API.
  */
-const fetchAudioUrl = async (videoId: string): Promise<string | null> => {
-  for (const instance of INVIDIOUS_INSTANCES) {
-    try {
-      const response = await axios.get(`${instance}/api/v1/videos/${videoId}`, { timeout: 5000 });
-
-      if (response.status === 200 && response.data?.adaptiveFormats) {
-        const audioFormat = response.data.adaptiveFormats.find((format: any) => format.type.includes("audio/"));
-
-        if (audioFormat) {
-          return audioFormat.url;
+const fetchYouTubeiAudio = async (videoId: string): Promise<string | null> => {
+  try {
+    const response = await axios.post(YOUTUBEI_API, {
+      videoId,
+      context: {
+        client: {
+          clientName: "ANDROID",
+          clientVersion: "17.31.35"
         }
       }
-    } catch (error) {
-      console.warn(`⚠️ Invidious instance failed: ${instance}, trying next...`);
-    }
-  }
+    });
 
-  console.error("❌ No working Invidious instance found.");
-  return null;
+    const streamingData = response.data.streamingData;
+    if (!streamingData) {
+      throw new Error("No streaming data found.");
+    }
+
+    const audioFormat = streamingData.adaptiveFormats.find((format: any) => format.mimeType.includes("audio/"));
+
+    return audioFormat ? audioFormat.url : null;
+  } catch (error) {
+    console.error("❌ Error fetching audio URL:", error);
+    return null;
+  }
 };
 
 /**
