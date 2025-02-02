@@ -1,4 +1,4 @@
-import ytdl from "ytdl-core-discord";
+import playdl from "play-dl"; // ✅ Avoid naming conflict
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
@@ -100,19 +100,18 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 };
 
 /**
- * Helper function to play an audio file from YouTube using `ytdl-core-discord`.
- * Waits until the audio ends before resolving.
+ * Helper function to play an audio file from YouTube using `play-dl`.
  */
 const playAudio = async (player: any, url: string) => {
   try {
-    const stream = await ytdl(url, {
-      filter: "audioonly",
-      quality: "highestaudio",
-      highWaterMark: 1 << 25 // Prevents buffering issues
+    console.log("🎧 Fetching audio stream...");
+    const stream = await playdl.stream(url); // ✅ Use renamed import
+
+    console.log("🎶 Streaming YouTube audio...");
+    const audioResource = createAudioResource(stream.stream, {
+      inputType: stream.type
     });
 
-    console.log("🎧 Streaming YouTube audio...");
-    const audioResource = createAudioResource(stream);
     player.play(audioResource);
 
     return new Promise<void>((resolve) => {
@@ -128,14 +127,14 @@ const playAudio = async (player: any, url: string) => {
  */
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    const stream = await ytdl(url, {
-      filter: "audioonly",
-      quality: "highestaudio",
-      highWaterMark: 1 << 25 // Prevents buffering issues
+    console.log("🎧 Fetching audio stream...");
+    const stream = await playdl.stream(url); // ✅ Use renamed import
+
+    console.log("🎶 Streaming YouTube audio...");
+    const audioResource = createAudioResource(stream.stream, {
+      inputType: stream.type
     });
 
-    console.log("🎧 Streaming YouTube audio...");
-    const audioResource = createAudioResource(stream);
     player.play(audioResource);
 
     player.once(AudioPlayerStatus.Idle, onEnd);
