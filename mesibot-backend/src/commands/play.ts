@@ -5,7 +5,6 @@ import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
 import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
-import ytdlp from "yt-dlp-exec";
 import { PassThrough } from "stream";
 import { spawn } from "child_process";
 
@@ -100,14 +99,35 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 const playAudio = async (player: any, url: string) => {
   try {
     console.log("🎧 Fetching audio stream via `yt-dlp`...");
-    // Create a stream for piping yt-dlp output
     const stream = new PassThrough();
 
-    // Spawn yt-dlp as a child process
     const process = spawn("yt-dlp", ["-f", "bestaudio", "--no-playlist", "--proxy", PROXY_URL, "-o", "-", url]);
 
-    // Pipe yt-dlp output into the PassThrough stream
+    // Listen for errors
+    process.stderr.on("data", (data) => {
+      console.error("❌ yt-dlp error:", data.toString());
+    });
+
+    process.on("close", (code) => {
+      if (code !== 0) {
+        console.error(`❌ yt-dlp process exited with code ${code}`);
+      }
+    });
+
+    // Ensure yt-dlp is actually producing data
+    let hasData = false;
+    process.stdout.on("data", () => {
+      hasData = true;
+    });
+
     process.stdout.pipe(stream);
+
+    // Wait for stream readiness before playing
+    setTimeout(() => {
+      if (!hasData) {
+        console.error("❌ No audio data received from yt-dlp.");
+      }
+    }, 3000);
 
     const audioResource = createAudioResource(stream);
     player.play(audioResource);
@@ -121,11 +141,30 @@ const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => voi
     console.log("🎧 Fetching audio stream via `yt-dlp`...");
     const stream = new PassThrough();
 
-    // Spawn yt-dlp as a child process
     const process = spawn("yt-dlp", ["-f", "bestaudio", "--no-playlist", "--proxy", PROXY_URL, "-o", "-", url]);
 
-    // Pipe yt-dlp output into the PassThrough stream
+    process.stderr.on("data", (data) => {
+      console.error("❌ yt-dlp error:", data.toString());
+    });
+
+    process.on("close", (code) => {
+      if (code !== 0) {
+        console.error(`❌ yt-dlp process exited with code ${code}`);
+      }
+    });
+
+    let hasData = false;
+    process.stdout.on("data", () => {
+      hasData = true;
+    });
+
     process.stdout.pipe(stream);
+
+    setTimeout(() => {
+      if (!hasData) {
+        console.error("❌ No audio data received from yt-dlp.");
+      }
+    }, 3000);
 
     const audioResource = createAudioResource(stream);
     player.play(audioResource);
