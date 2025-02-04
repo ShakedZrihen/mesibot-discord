@@ -44,12 +44,14 @@ export const play = async ({ req, res }: interactionPayload) => {
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
 
+    // ✅ Get the first song from the playlist
     const playlist = await playlistService.play(playlistId);
 
     if (!playlist || !playlist.currentPlaying) {
       throw new Error("No valid song found in the playlist.");
     }
 
+    // ✅ Play the song (including intro if available)
     await playSong(player, playlistId, playlist.currentPlaying);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -60,14 +62,19 @@ export const play = async ({ req, res }: interactionPayload) => {
   }
 };
 
+/**
+ * Plays a song and its intro (if available), then moves to the next song.
+ */
 const playSong = async (player: any, playlistId: string, song: { url: string; introUrl?: string }) => {
   try {
+    // ✅ Play the intro first (if available)
     if (song.introUrl) {
       console.log("🎤 Playing intro:", song.introUrl);
       await playAudio(player, song.introUrl);
       console.log("🎶 Intro finished, now playing the actual song...");
     }
 
+    // ✅ Play the main song
     console.log("▶️ Playing song:", song.url);
     await playAudioAndWaitForEnd(player, song.url, async () => {
       console.log("✅ Song finished, playing next...");
