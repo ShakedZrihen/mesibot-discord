@@ -6,6 +6,8 @@ import { player } from "../clients/player";
 import { wsManager } from "..";
 import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
 import ytdlp from "yt-dlp-exec";
+import { PassThrough } from "stream";
+import { spawn } from "child_process";
 
 const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
 
@@ -98,14 +100,16 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 const playAudio = async (player: any, url: string) => {
   try {
     console.log("🎧 Fetching audio stream via `yt-dlp`...");
-    const stream = await ytdlp(url, {
-      format: "bestaudio",
-      output: "-",
-      proxy: PROXY_URL,
-      quiet: true
-    });
+    // Create a stream for piping yt-dlp output
+    const stream = new PassThrough();
 
-    const audioResource = createAudioResource(stream.url);
+    // Spawn yt-dlp as a child process
+    const process = spawn("yt-dlp", ["-f", "bestaudio", "--no-playlist", "--proxy", PROXY_URL, "-o", "-", url]);
+
+    // Pipe yt-dlp output into the PassThrough stream
+    process.stdout.pipe(stream);
+
+    const audioResource = createAudioResource(stream);
     player.play(audioResource);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -115,13 +119,15 @@ const playAudio = async (player: any, url: string) => {
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
     console.log("🎧 Fetching audio stream via `yt-dlp`...");
-    const stream = await ytdlp(url, {
-      format: "bestaudio",
-      output: "-",
-      proxy: PROXY_URL,
-      quiet: true
-    });
-    const audioResource = createAudioResource(stream.url);
+    const stream = new PassThrough();
+
+    // Spawn yt-dlp as a child process
+    const process = spawn("yt-dlp", ["-f", "bestaudio", "--no-playlist", "--proxy", PROXY_URL, "-o", "-", url]);
+
+    // Pipe yt-dlp output into the PassThrough stream
+    process.stdout.pipe(stream);
+
+    const audioResource = createAudioResource(stream);
     player.play(audioResource);
     player.once(AudioPlayerStatus.Idle, onEnd);
   } catch (error) {
