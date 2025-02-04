@@ -42,9 +42,18 @@ export const playAudio = async (player: any, url: string) => {
 export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
     const videoInfo = await fetchAudioUrl(url);
-    if (!videoInfo) throw new Error("No valid formats found.");
+    if (!videoInfo) {
+      throw new Error("No valid formats found.");
+    }
 
     const audioResource = createAudioResource(videoInfo);
+
+    if (!audioResource) {
+      throw new Error("Failed to create audio resource.");
+    }
+
+    console.log("🎵 Audio resource created successfully!", audioResource);
+
     player.play(audioResource);
 
     player.once(AudioPlayerStatus.Idle, onEnd);
