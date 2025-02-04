@@ -1,49 +1,65 @@
-import playdl from "play-dl"; // ✅ Avoid naming conflict
+import playdl from "play-dl";
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
-import fs from "fs";
-import { exec } from "child_process";
-import util from "util";
+import { readFileSync, writeFileSync } from "fs";
+import puppeteer from "puppeteer";
+import { YOUTUBE_EMAIL, YOUTUBE_PASSWORD } from "../env";
 
-const execPromise = util.promisify(exec);
+const YOUTUBE_LOGIN_URL = "https://www.youtube.com";
 
 /**
- * Fetches YouTube cookies dynamically using `curl` and saves them to `cookies.txt`
+ * Launches Puppeteer, logs into YouTube, and extracts cookies
  */
-const updateCookies = async (): Promise<void> => {
-  try {
-    console.log("🍪 Fetching fresh YouTube cookies...");
-
-    // ✅ Execute curl command to fetch cookies
-    await execPromise(
-      `curl -c cookies.txt -b cookies.txt -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" https://www.youtube.com`
-    );
-
-    console.log("✅ Cookies saved successfully.");
-  } catch (error) {
-    console.error("❌ Error fetching cookies:", error);
+const fetchCookies = async () => {
+  if (!YOUTUBE_EMAIL || !YOUTUBE_PASSWORD) {
+    console.log("Email and Password are missing. abort");
   }
+
+  console.log("🔍 Launching Puppeteer to fetch YouTube cookies...");
+
+  const browser = await puppeteer.launch({
+    headless: true, // Set to `false` for debugging (opens visible browser)
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"]
+  });
+
+  const page = await browser.newPage();
+  await page.goto(YOUTUBE_LOGIN_URL, { waitUntil: "networkidle2" });
+
+  console.log("🔑 Logging into YouTube...");
+
+  // **Replace with your Google credentials (Use env variables for security)**
+  await page.type('input[type="email"]', YOUTUBE_EMAIL!, { delay: 50 });
+  await page.keyboard.press("Enter");
+
+  await page.type('input[type="password"]', YOUTUBE_PASSWORD!, { delay: 50 });
+  await page.keyboard.press("Enter");
+
+  // **Wait until login is complete**
+  await page.waitForNavigation({ waitUntil: "networkidle2" });
+
+  console.log("✅ Logged into YouTube, extracting cookies...");
+
+  // **Extract Cookies**
+  const cookies = await page.cookies();
+  const formattedCookies = cookies.map(({ name, value }) => `${name}=${value}`).join("; ");
+
+  // **Save cookies to file**
+  writeFileSync("./cookies.txt", formattedCookies, "utf8");
+  console.log("🍪 Cookies saved successfully.");
+
+  await browser.close();
 };
 
 /**
- * Reads and formats cookies from `cookies.txt` for `play-dl`
+ * Reads and returns formatted cookies for `play-dl`
  */
 const getFormattedCookies = (): string => {
   try {
-    const rawCookies = fs.readFileSync("./cookies.txt", "utf8");
-
-    return rawCookies
-      .split("\n")
-      .filter((line) => !line.startsWith("#") && line.trim() !== "") // Remove comments and empty lines
-      .map((line) => {
-        const parts = line.split("\t"); // Cookies are tab-separated
-        return `${parts[5]}=${parts[6]};`; // Extract cookie name=value pairs
-      })
-      .join(" "); // Convert to a space-separated header
+    return readFileSync("./cookies.txt", "utf8");
   } catch (error) {
     console.error("❌ Error reading cookies file:", error);
     return "";
@@ -88,8 +104,8 @@ export const play = async ({ req, res }: interactionPayload) => {
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
 
-    // ✅ Fetch fresh cookies before playing
-    await updateCookies();
+    // ✅ Fetch fresh YouTube cookies
+    await fetchCookies();
     const formattedCookies = getFormattedCookies();
 
     // ✅ Set token for play-dl with updated cookies
@@ -122,14 +138,12 @@ export const play = async ({ req, res }: interactionPayload) => {
  */
 const playSong = async (player: any, playlistId: string, song: { url: string; introUrl?: string }) => {
   try {
-    // ✅ Play the intro first (if available)
     if (song.introUrl) {
       console.log("🎤 Playing intro:", song.introUrl);
       await playAudio(player, song.introUrl);
       console.log("🎶 Intro finished, now playing the actual song...");
     }
 
-    // ✅ Play the main song
     console.log("▶️ Playing song:", song.url);
     await playAudioAndWaitForEnd(player, song.url, async () => {
       console.log("✅ Song finished, playing next...");
