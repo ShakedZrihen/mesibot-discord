@@ -5,7 +5,50 @@ import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
-import { readFileSync } from "fs";
+import fs from "fs";
+import { exec } from "child_process";
+import util from "util";
+
+const execPromise = util.promisify(exec);
+
+/**
+ * Fetches YouTube cookies dynamically using `curl` and saves them to `cookies.txt`
+ */
+const updateCookies = async (): Promise<void> => {
+  try {
+    console.log("🍪 Fetching fresh YouTube cookies...");
+
+    // ✅ Execute curl command to fetch cookies
+    await execPromise(
+      `curl -c cookies.txt -b cookies.txt -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" https://www.youtube.com`
+    );
+
+    console.log("✅ Cookies saved successfully.");
+  } catch (error) {
+    console.error("❌ Error fetching cookies:", error);
+  }
+};
+
+/**
+ * Reads and formats cookies from `cookies.txt` for `play-dl`
+ */
+const getFormattedCookies = (): string => {
+  try {
+    const rawCookies = fs.readFileSync("./cookies.txt", "utf8");
+
+    return rawCookies
+      .split("\n")
+      .filter((line) => !line.startsWith("#") && line.trim() !== "") // Remove comments and empty lines
+      .map((line) => {
+        const parts = line.split("\t"); // Cookies are tab-separated
+        return `${parts[5]}=${parts[6]};`; // Extract cookie name=value pairs
+      })
+      .join(" "); // Convert to a space-separated header
+  } catch (error) {
+    console.error("❌ Error reading cookies file:", error);
+    return "";
+  }
+};
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -45,31 +88,23 @@ export const play = async ({ req, res }: interactionPayload) => {
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
 
+    // ✅ Fetch fresh cookies before playing
+    await updateCookies();
+    const formattedCookies = getFormattedCookies();
+
+    // ✅ Set token for play-dl with updated cookies
+    playdl.setToken({
+      youtube: {
+        cookie: formattedCookies
+      }
+    });
+
     // ✅ Get the first song from the playlist
     const playlist = await playlistService.play(playlistId);
 
     if (!playlist || !playlist.currentPlaying) {
       throw new Error("No valid song found in the playlist.");
     }
-
-    const rawCookies = readFileSync("./cookies.txt", "utf8");
-
-    // ✅ Convert cookies.txt format into a single string (space-separated)
-    const formattedCookies = rawCookies
-      .split("\n")
-      .filter((line) => !line.startsWith("#") && line.trim() !== "") // Remove comments and empty lines
-      .map((line) => {
-        const parts = line.split("\t"); // Cookies are tab-separated
-        return `${parts[5]}=${parts[6]};`; // Extract cookie name=value pairs
-      })
-      .join(" "); // Convert to a space-separated header
-
-    // ✅ Set token for play-dl with properly formatted cookies
-    playdl.setToken({
-      youtube: {
-        cookie: formattedCookies
-      }
-    });
 
     // ✅ Play the song (including intro if available)
     await playSong(player, playlistId, playlist.currentPlaying);
@@ -125,7 +160,8 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 const playAudio = async (player: any, url: string) => {
   try {
     console.log("🎧 Fetching audio stream...");
-    const stream = await playdl.stream(url); // ✅ Use renamed import
+
+    const stream = await playdl.stream(url, { quality: 2 });
 
     console.log("🎶 Streaming YouTube audio...");
     const audioResource = createAudioResource(stream.stream);
@@ -146,7 +182,7 @@ const playAudio = async (player: any, url: string) => {
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
     console.log("🎧 Fetching audio stream...");
-    const stream = await playdl.stream(url); // ✅ Use renamed import
+    const stream = await playdl.stream(url);
 
     console.log("🎶 Streaming YouTube audio...", stream);
     const audioResource = createAudioResource(stream.stream);
