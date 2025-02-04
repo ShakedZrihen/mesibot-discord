@@ -1,4 +1,5 @@
-import playdl from "play-dl";
+import ytdl from "ytdl-core";
+
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
@@ -110,18 +111,14 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
  */
 const playAudio = async (player: any, url: string) => {
   try {
-    console.log("🎧 Fetching audio stream via `play-dl`...");
+    console.log("🎧 Fetching audio stream via `yt-dlp`...");
 
-    const stream = await playdl.stream(url, { quality: 2 });
+    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
 
-    console.log("🎶 Streaming YouTube audio via `play-dl`...");
-    const audioResource = createAudioResource(stream.stream);
+    console.log("🎶 Streaming YouTube audio via `yt-dlp`...");
+    const audioResource = createAudioResource(stream);
 
     player.play(audioResource);
-
-    return new Promise<void>((resolve) => {
-      player.once(AudioPlayerStatus.Idle, resolve);
-    });
   } catch (error) {
     console.error("❌ Error playing audio:", error);
   }
@@ -134,10 +131,10 @@ const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => voi
   try {
     console.log("🎧 Fetching audio stream via `play-dl`...");
 
-    const stream = await playdl.stream(url, { quality: 2 });
+    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
 
     console.log("🎶 Streaming YouTube audio via `play-dl`...", stream);
-    const audioResource = createAudioResource(stream.stream);
+    const audioResource = createAudioResource(stream);
 
     player.play(audioResource);
 
