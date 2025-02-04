@@ -21,7 +21,13 @@ setGlobalDispatcher(proxyAgent);
 export const playAudio = async (player: any, url: string) => {
   try {
     console.log("🎧 Fetching video info via `play-dl`...");
-    const videoInfo = await playdl.video_basic_info(url);
+
+    // ✅ Catch errors in `video_basic_info`
+    const videoInfo = await playdl.video_basic_info(url).catch((err) => {
+      console.error("❌ Failed to get video info:", err);
+      throw err;
+    });
+
     console.log("✅ Video info:", videoInfo.video_details.title);
 
     const stream = await playdl.stream(url, { quality: 2 });
@@ -31,11 +37,6 @@ export const playAudio = async (player: any, url: string) => {
     });
 
     player.play(audioResource);
-
-    // ✅ Log audio player state changes
-    player.on(AudioPlayerStatus.Playing, () => console.log("▶️ Now Playing!"));
-    player.on(AudioPlayerStatus.Idle, () => console.log("⏹️ Audio Finished!"));
-    player.on("error", (error: any) => console.error("❌ Audio Player Error:", error));
   } catch (error) {
     console.error("❌ Error playing audio:", error);
   }
