@@ -1,70 +1,10 @@
-import playdl from "play-dl";
+import youtubedl from "youtube-dl-exec";
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
-import { readFileSync, writeFileSync } from "fs";
-import puppeteer from "puppeteer";
-import { YOUTUBE_EMAIL, YOUTUBE_PASSWORD } from "../env";
-
-const YOUTUBE_LOGIN_URL = "https://www.youtube.com";
-
-/**
- * Launches Puppeteer, logs into YouTube, and extracts cookies
- */
-const fetchCookies = async () => {
-  if (!YOUTUBE_EMAIL || !YOUTUBE_PASSWORD) {
-    console.log("Email and Password are missing. abort");
-  }
-
-  console.log("🔍 Launching Puppeteer to fetch YouTube cookies...");
-
-  const browser = await puppeteer.launch({
-    headless: true, // Set to `false` for debugging (opens visible browser)
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"]
-  });
-
-  const page = await browser.newPage();
-  await page.goto(YOUTUBE_LOGIN_URL, { waitUntil: "networkidle2" });
-
-  console.log("🔑 Logging into YouTube...");
-
-  // **Replace with your Google credentials (Use env variables for security)**
-  await page.type('input[type="email"]', YOUTUBE_EMAIL!, { delay: 50 });
-  await page.keyboard.press("Enter");
-
-  await page.type('input[type="password"]', YOUTUBE_PASSWORD!, { delay: 50 });
-  await page.keyboard.press("Enter");
-
-  // **Wait until login is complete**
-  await page.waitForNavigation({ waitUntil: "networkidle2" });
-
-  console.log("✅ Logged into YouTube, extracting cookies...");
-
-  // **Extract Cookies**
-  const cookies = await page.cookies();
-  const formattedCookies = cookies.map(({ name, value }) => `${name}=${value}`).join("; ");
-
-  // **Save cookies to file**
-  writeFileSync("./cookies.txt", formattedCookies, "utf8");
-  console.log("🍪 Cookies saved successfully.");
-
-  await browser.close();
-};
-
-/**
- * Reads and returns formatted cookies for `play-dl`
- */
-const getFormattedCookies = (): string => {
-  try {
-    return readFileSync("./cookies.txt", "utf8");
-  } catch (error) {
-    console.error("❌ Error reading cookies file:", error);
-    return "";
-  }
-};
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -102,17 +42,6 @@ export const play = async ({ req, res }: interactionPayload) => {
     res.json({
       type: ResponseType.Immediate,
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
-    });
-
-    // ✅ Fetch fresh YouTube cookies
-    await fetchCookies();
-    const formattedCookies = getFormattedCookies();
-
-    // ✅ Set token for play-dl with updated cookies
-    playdl.setToken({
-      youtube: {
-        cookie: formattedCookies
-      }
     });
 
     // ✅ Get the first song from the playlist
@@ -169,16 +98,26 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 };
 
 /**
- * Helper function to play an audio file from YouTube using `play-dl`.
+ * Helper function to play an audio file from YouTube using `youtube-dl-exec`.
  */
 const playAudio = async (player: any, url: string) => {
   try {
     console.log("🎧 Fetching audio stream...");
 
-    const stream = await playdl.stream(url, { quality: 2 });
+    const audioUrl = await youtubedl(url, {
+      format: "bestaudio",
+      noCheckCertificates: true,
+      youtubeSkipDashManifest: true,
+      addHeader: ["referer:youtube.com", "user-agent:googlebot"]
+    });
 
-    console.log("🎶 Streaming YouTube audio...");
-    const audioResource = createAudioResource(stream.stream);
+    // If the response is a string, use it directly
+    if (!audioUrl || typeof audioUrl !== "string") {
+      throw new Error("No valid audio URL found.");
+    }
+
+    console.log("🎶 Streaming YouTube audio...", audioUrl);
+    const audioResource = createAudioResource(audioUrl);
 
     player.play(audioResource);
 
@@ -196,10 +135,20 @@ const playAudio = async (player: any, url: string) => {
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
     console.log("🎧 Fetching audio stream...");
-    const stream = await playdl.stream(url);
+    const audioUrl = await youtubedl(url, {
+      format: "bestaudio",
+      noCheckCertificates: true,
+      youtubeSkipDashManifest: true,
+      addHeader: ["referer:youtube.com", "user-agent:googlebot"]
+    });
 
-    console.log("🎶 Streaming YouTube audio...", stream);
-    const audioResource = createAudioResource(stream.stream);
+    // If the response is a string, use it directly
+    if (!audioUrl || typeof audioUrl !== "string") {
+      throw new Error("No valid audio URL found.");
+    }
+
+    console.log("🎶 Streaming YouTube audio...", audioUrl);
+    const audioResource = createAudioResource(audioUrl);
 
     player.play(audioResource);
 
