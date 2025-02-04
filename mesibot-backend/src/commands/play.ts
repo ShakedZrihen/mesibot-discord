@@ -1,4 +1,4 @@
-import { joinVoiceChannel, VoiceConnection } from "@discordjs/voice";
+import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
@@ -39,24 +39,30 @@ export const play = async ({ req, res }: interactionPayload) => {
 
     Connection.setConnection(connection);
 
-    connection.on("stateChange", (oldState, newState) => {
-      console.log(`🔄 Voice Connection State Change: ${oldState.status} -> ${newState.status}`);
-      if (newState.status === "ready") {
-        Connection.getConnection()?.subscribe(player);
-        console.log("player subscribed");
-      }
-    });
+    // ✅ Wait for the connection to be `ready` before playing
+    await new Promise<void>((resolve) => {
+      connection?.on(VoiceConnectionStatus.Ready, () => {
+        console.log("✅ Voice connection is ready!");
+        connection?.subscribe(player);
+        resolve();
+      });
 
-    connection.on("error", (error) => console.error("❌ Voice Connection Error:", error));
+      connection?.on("stateChange", (oldState, newState) => {
+        console.log(`🔄 Voice Connection State Change: ${oldState.status} -> ${newState.status}`);
+        if (newState.status === VoiceConnectionStatus.Ready) {
+          connection?.subscribe(player);
+          console.log("✅ Player subscribed after connection is ready");
+          resolve();
+        }
+      });
+
+      connection?.on("error", (error) => console.error("❌ Voice Connection Error:", error));
+    });
 
     res.json({
       type: ResponseType.Immediate,
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
-
-    while (Connection.getConnection()?.state.status !== "ready") {
-      console.log("waiting for connection");
-    }
 
     // ✅ Get the first song from the playlist
     const playlist = await playlistService.play(playlistId);
@@ -65,7 +71,7 @@ export const play = async ({ req, res }: interactionPayload) => {
       throw new Error("No valid song found in the playlist.");
     }
 
-    // ✅ Play the song (including intro if available)
+    // ✅ Play the first song **only after the connection is ready**
     await playSong(player, playlistId, playlist.currentPlaying);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -75,7 +81,6 @@ export const play = async ({ req, res }: interactionPayload) => {
     });
   }
 };
-
 /**
  * Plays a song and its intro (if available), then moves to the next song.
  */
