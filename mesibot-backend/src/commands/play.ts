@@ -2,7 +2,7 @@ import { joinVoiceChannel, VoiceConnection } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
-import { player } from "../clients/player";
+import { Connection, player } from "../clients/player";
 import { wsManager } from "..";
 import { playAudio, playAudioAndWaitForEnd } from "../services/streaming";
 
@@ -37,10 +37,14 @@ export const play = async ({ req, res }: interactionPayload) => {
       adapterCreator: guild?.voiceAdapterCreator as any
     });
 
-    connection.subscribe(player);
+    Connection.setConnection(connection);
 
     connection.on("stateChange", (oldState, newState) => {
       console.log(`🔄 Voice Connection State Change: ${oldState.status} -> ${newState.status}`);
+      if (newState.status === "ready") {
+        Connection.getConnection()?.subscribe(player);
+        console.log("player subscribed");
+      }
     });
 
     connection.on("error", (error) => console.error("❌ Voice Connection Error:", error));
@@ -49,6 +53,10 @@ export const play = async ({ req, res }: interactionPayload) => {
       type: ResponseType.Immediate,
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
+
+    while (Connection.getConnection()?.state.status !== "ready") {
+      console.log("waiting for connection");
+    }
 
     // ✅ Get the first song from the playlist
     const playlist = await playlistService.play(playlistId);
