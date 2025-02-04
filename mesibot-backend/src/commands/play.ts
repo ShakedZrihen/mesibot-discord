@@ -7,7 +7,7 @@ import { player } from "../clients/player";
 import { wsManager } from "..";
 import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
 
-const BRIGHTDATA_PROXY = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@brd.superproxy.io:33335`;
+const BRIGHTDATA_PROXY = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
