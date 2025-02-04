@@ -39,6 +39,12 @@ export const play = async ({ req, res }: interactionPayload) => {
 
     connection.subscribe(player);
 
+    connection.on("stateChange", (oldState, newState) => {
+      console.log(`🔄 Voice Connection State Change: ${oldState.status} -> ${newState.status}`);
+    });
+
+    connection.on("error", (error) => console.error("❌ Voice Connection Error:", error));
+
     res.json({
       type: ResponseType.Immediate,
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
