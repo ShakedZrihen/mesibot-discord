@@ -1,14 +1,10 @@
-import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
+import { joinVoiceChannel, VoiceConnection } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
-import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
-import { PassThrough } from "stream";
-import { spawn } from "child_process";
-
-const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
+import { playAudio, playAudioAndWaitForEnd } from "../services/streaming";
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -93,106 +89,5 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
     } else {
       console.log("🎵 Playlist ended.");
     }
-  }
-};
-
-const playAudio = async (player: any, url: string) => {
-  try {
-    console.log("🎧 Fetching audio stream via `yt-dlp`...");
-    const stream = new PassThrough();
-
-    const process = spawn("yt-dlp", [
-      "-f",
-      "bestaudio",
-      "--no-playlist",
-      "--proxy",
-      PROXY_URL,
-      "-o",
-      "-",
-      "--user-agent",
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-      url
-    ]);
-    
-    // Listen for errors
-    process.stderr.on("data", (data) => {
-      console.error("❌ yt-dlp error:", data.toString());
-    });
-
-    process.on("close", (code) => {
-      if (code !== 0) {
-        console.error(`❌ yt-dlp process exited with code ${code}`);
-      }
-    });
-
-    // Ensure yt-dlp is actually producing data
-    let hasData = false;
-    process.stdout.on("data", () => {
-      hasData = true;
-    });
-
-    process.stdout.pipe(stream);
-
-    // Wait for stream readiness before playing
-    setTimeout(() => {
-      if (!hasData) {
-        console.error("❌ No audio data received from yt-dlp.");
-      }
-    }, 3000);
-
-    const audioResource = createAudioResource(stream);
-    player.play(audioResource);
-  } catch (error) {
-    console.error("❌ Error playing audio:", error);
-  }
-};
-
-const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
-  try {
-    console.log("🎧 Fetching audio stream via `yt-dlp`...");
-    const stream = new PassThrough();
-
-    const process = spawn("yt-dlp", [
-      "-f",
-      "bestaudio",
-      "--no-playlist",
-      "--proxy",
-      PROXY_URL,
-      "-o",
-      "-",
-      "--user-agent",
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-      url
-    ]);
-
-    process.stderr.on("data", (data) => {
-      console.error("❌ yt-dlp error:", data.toString());
-    });
-
-    process.on("close", (code) => {
-      if (code !== 0) {
-        console.error(`❌ yt-dlp process exited with code ${code}`);
-      }
-    });
-
-    let hasData = false;
-    process.stdout.on("data", () => {
-      hasData = true;
-    });
-
-    process.stdout.pipe(stream);
-
-    setTimeout(() => {
-      if (!hasData) {
-        console.error("❌ No audio data received from yt-dlp.");
-      }
-    }, 3000);
-
-    const audioResource = createAudioResource(stream);
-    player.play(audioResource);
-    player.once(AudioPlayerStatus.Idle, onEnd);
-  } catch (error) {
-    console.error("❌ Error playing audio:", error);
-    onEnd();
   }
 };
