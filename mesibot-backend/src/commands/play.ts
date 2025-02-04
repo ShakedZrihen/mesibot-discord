@@ -1,5 +1,3 @@
-import ytdl from "ytdl-core";
-
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
@@ -7,13 +5,9 @@ import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
 import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
-import { setGlobalDispatcher, ProxyAgent } from "undici";
+import ytdlp from "yt-dlp-exec";
 
 const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
-
-// ✅ Set global proxy for all outgoing requests
-const proxyAgent = new ProxyAgent(PROXY_URL);
-setGlobalDispatcher(proxyAgent);
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -53,14 +47,12 @@ export const play = async ({ req, res }: interactionPayload) => {
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
 
-    // ✅ Get the first song from the playlist
     const playlist = await playlistService.play(playlistId);
 
     if (!playlist || !playlist.currentPlaying) {
       throw new Error("No valid song found in the playlist.");
     }
 
-    // ✅ Play the song (including intro if available)
     await playSong(player, playlistId, playlist.currentPlaying);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -71,9 +63,6 @@ export const play = async ({ req, res }: interactionPayload) => {
   }
 };
 
-/**
- * Plays a song and its intro (if available), then moves to the next song.
- */
 const playSong = async (player: any, playlistId: string, song: { url: string; introUrl?: string }) => {
   try {
     if (song.introUrl) {
@@ -106,38 +95,34 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
   }
 };
 
-/**
- * Helper function to play an audio file from YouTube using `play-dl`.
- */
 const playAudio = async (player: any, url: string) => {
   try {
     console.log("🎧 Fetching audio stream via `yt-dlp`...");
+    const stream = await ytdlp(url, {
+      format: "bestaudio",
+      output: "-",
+      proxy: PROXY_URL,
+      quiet: true
+    });
 
-    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
-
-    console.log("🎶 Streaming YouTube audio via `yt-dlp`...");
-    const audioResource = createAudioResource(stream);
-
+    const audioResource = createAudioResource(stream.url);
     player.play(audioResource);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
   }
 };
 
-/**
- * Helper function to play an audio file and trigger an action when it ends.
- */
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    console.log("🎧 Fetching audio stream via `play-dl`...");
-
-    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
-
-    console.log("🎶 Streaming YouTube audio via `play-dl`...", stream);
-    const audioResource = createAudioResource(stream);
-
+    console.log("🎧 Fetching audio stream via `yt-dlp`...");
+    const stream = await ytdlp(url, {
+      format: "bestaudio",
+      output: "-",
+      proxy: PROXY_URL,
+      quiet: true
+    });
+    const audioResource = createAudioResource(stream.url);
     player.play(audioResource);
-
     player.once(AudioPlayerStatus.Idle, onEnd);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
