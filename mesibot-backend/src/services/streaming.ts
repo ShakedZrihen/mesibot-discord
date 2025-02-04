@@ -8,13 +8,19 @@ import youtubedl from "youtube-dl-exec";
 export const playAudio = async (player: any, url: string) => {
   try {
     const videoInfo = await fetchAudioUrl(url);
-    
+
     if (!videoInfo) {
       throw new Error("No valid formats found.");
     }
 
+    console.log("🎧 Fetching audio stream:", videoInfo);
+
     const audioResource = createAudioResource(videoInfo);
     player.play(audioResource);
+
+    player.on(AudioPlayerStatus.Playing, () => console.log("▶️ Now Playing in Discord!"));
+    player.on(AudioPlayerStatus.Idle, () => console.log("⏹️ Audio Finished!"));
+    player.on("error", (error: any) => console.error("❌ Audio Player Error:", error));
 
     return new Promise<void>((resolve) => {
       player.once(AudioPlayerStatus.Idle, resolve);
@@ -55,7 +61,10 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       addHeader: ["referer:youtube.com", "user-agent:googlebot"]
     })) as any;
 
-    if (!videoInfo || !videoInfo.formats) return null;
+    if (!videoInfo || !videoInfo.formats) {
+      console.log("No video info");
+      return null;
+    }
 
     // ✅ Pick the lowest quality audio format
     let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);
