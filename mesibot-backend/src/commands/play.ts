@@ -5,6 +5,9 @@ import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
+import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
+
+const BRIGHTDATA_PROXY = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@brd.superproxy.io:33335`;
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -98,16 +101,17 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 };
 
 /**
- * Helper function to play an audio file from YouTube using `youtube-dl-exec`.
+ * Helper function to play an audio file from YouTube using `youtube-dl-exec` and BrightData Proxy.
  */
 const playAudio = async (player: any, url: string) => {
   try {
-    console.log("🎧 Fetching audio stream...");
+    console.log("🎧 Fetching audio stream via BrightData proxy...");
 
     const audioUrl = await youtubedl(url, {
       format: "bestaudio",
       noCheckCertificates: true,
       youtubeSkipDashManifest: true,
+      proxy: BRIGHTDATA_PROXY, // ✅ BrightData Proxy
       addHeader: ["referer:youtube.com", "user-agent:googlebot"]
     });
 
@@ -116,7 +120,7 @@ const playAudio = async (player: any, url: string) => {
       throw new Error("No valid audio URL found.");
     }
 
-    console.log("🎶 Streaming YouTube audio...", audioUrl);
+    console.log("🎶 Streaming YouTube audio via proxy...", audioUrl);
     const audioResource = createAudioResource(audioUrl);
 
     player.play(audioResource);
@@ -134,11 +138,12 @@ const playAudio = async (player: any, url: string) => {
  */
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    console.log("🎧 Fetching audio stream...");
+    console.log("🎧 Fetching audio stream via BrightData proxy...");
     const audioUrl = await youtubedl(url, {
       format: "bestaudio",
       noCheckCertificates: true,
       youtubeSkipDashManifest: true,
+      proxy: BRIGHTDATA_PROXY, // ✅ BrightData Proxy
       addHeader: ["referer:youtube.com", "user-agent:googlebot"]
     });
 
@@ -147,7 +152,7 @@ const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => voi
       throw new Error("No valid audio URL found.");
     }
 
-    console.log("🎶 Streaming YouTube audio...", audioUrl);
+    console.log("🎶 Streaming YouTube audio via proxy...", audioUrl);
     const audioResource = createAudioResource(audioUrl);
 
     player.play(audioResource);
