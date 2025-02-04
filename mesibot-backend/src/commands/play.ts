@@ -1,4 +1,4 @@
-import youtubedl from "youtube-dl-exec";
+import playdl from "play-dl";
 import { createAudioResource, joinVoiceChannel, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
@@ -6,8 +6,13 @@ import { playlistService } from "../services/playlist";
 import { player } from "../clients/player";
 import { wsManager } from "..";
 import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
+import { setGlobalDispatcher, ProxyAgent } from "undici";
 
-const BRIGHTDATA_PROXY = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
+const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
+
+// ✅ Set global proxy agent for all outgoing requests
+const proxyAgent = new ProxyAgent(PROXY_URL);
+setGlobalDispatcher(proxyAgent);
 
 export const play = async ({ req, res }: interactionPayload) => {
   const interaction = req.body;
@@ -101,27 +106,16 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 };
 
 /**
- * Helper function to play an audio file from YouTube using `youtube-dl-exec` and BrightData Proxy.
+ * Helper function to play an audio file from YouTube using `play-dl`.
  */
 const playAudio = async (player: any, url: string) => {
   try {
-    console.log("🎧 Fetching audio stream via BrightData proxy...");
+    console.log("🎧 Fetching audio stream via `play-dl`...");
 
-    const audioUrl = await youtubedl(url, {
-      format: "bestaudio",
-      noCheckCertificates: true,
-      youtubeSkipDashManifest: true,
-      proxy: BRIGHTDATA_PROXY, // ✅ BrightData Proxy
-      addHeader: ["referer:youtube.com", "user-agent:googlebot"]
-    });
+    const stream = await playdl.stream(url, { quality: 2 });
 
-    // If the response is a string, use it directly
-    if (!audioUrl || typeof audioUrl !== "string") {
-      throw new Error("No valid audio URL found.");
-    }
-
-    console.log("🎶 Streaming YouTube audio via proxy...", audioUrl);
-    const audioResource = createAudioResource(audioUrl);
+    console.log("🎶 Streaming YouTube audio via `play-dl`...");
+    const audioResource = createAudioResource(stream.stream);
 
     player.play(audioResource);
 
@@ -138,22 +132,12 @@ const playAudio = async (player: any, url: string) => {
  */
 const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    console.log("🎧 Fetching audio stream via BrightData proxy...");
-    const audioUrl = await youtubedl(url, {
-      format: "bestaudio",
-      noCheckCertificates: true,
-      youtubeSkipDashManifest: true,
-      proxy: BRIGHTDATA_PROXY, // ✅ BrightData Proxy
-      addHeader: ["referer:youtube.com", "user-agent:googlebot"]
-    });
+    console.log("🎧 Fetching audio stream via `play-dl`...");
 
-    // If the response is a string, use it directly
-    if (!audioUrl || typeof audioUrl !== "string") {
-      throw new Error("No valid audio URL found.");
-    }
+    const stream = await playdl.stream(url, { quality: 2 });
 
-    console.log("🎶 Streaming YouTube audio via proxy...", audioUrl);
-    const audioResource = createAudioResource(audioUrl);
+    console.log("🎶 Streaming YouTube audio via `play-dl`...", stream);
+    const audioResource = createAudioResource(stream.stream);
 
     player.play(audioResource);
 
