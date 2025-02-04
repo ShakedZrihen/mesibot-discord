@@ -8,7 +8,10 @@ import youtubedl from "youtube-dl-exec";
 export const playAudio = async (player: any, url: string) => {
   try {
     const videoInfo = await fetchAudioUrl(url);
-    if (!videoInfo) throw new Error("No valid formats found.");
+    
+    if (!videoInfo) {
+      throw new Error("No valid formats found.");
+    }
 
     const audioResource = createAudioResource(videoInfo);
     player.play(audioResource);
