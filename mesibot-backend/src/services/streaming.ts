@@ -16,6 +16,12 @@ export const playAudio = async (player: any, url: string) => {
     console.log("🎧 Fetching audio stream:", videoInfo);
 
     const audioResource = createAudioResource(videoInfo);
+    if (!audioResource) {
+      throw new Error("Failed to create audio resource.");
+    }
+
+    console.log("🎵 Audio resource created successfully!", audioResource);
+
     player.play(audioResource);
 
     player.on(AudioPlayerStatus.Playing, () => console.log("▶️ Now Playing in Discord!"));
