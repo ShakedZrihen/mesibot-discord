@@ -101,8 +101,19 @@ const playAudio = async (player: any, url: string) => {
     console.log("🎧 Fetching audio stream via `yt-dlp`...");
     const stream = new PassThrough();
 
-    const process = spawn("yt-dlp", ["-f", "bestaudio", "--no-playlist", "--proxy", PROXY_URL, "-o", "-", url]);
-
+    const process = spawn("yt-dlp", [
+      "-f",
+      "bestaudio",
+      "--no-playlist",
+      "--proxy",
+      PROXY_URL,
+      "-o",
+      "-",
+      "--user-agent",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      url
+    ]);
+    
     // Listen for errors
     process.stderr.on("data", (data) => {
       console.error("❌ yt-dlp error:", data.toString());
@@ -141,7 +152,18 @@ const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => voi
     console.log("🎧 Fetching audio stream via `yt-dlp`...");
     const stream = new PassThrough();
 
-    const process = spawn("yt-dlp", ["-f", "bestaudio", "--no-playlist", "--proxy", PROXY_URL, "-o", "-", url]);
+    const process = spawn("yt-dlp", [
+      "-f",
+      "bestaudio",
+      "--no-playlist",
+      "--proxy",
+      PROXY_URL,
+      "-o",
+      "-",
+      "--user-agent",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      url
+    ]);
 
     process.stderr.on("data", (data) => {
       console.error("❌ yt-dlp error:", data.toString());
