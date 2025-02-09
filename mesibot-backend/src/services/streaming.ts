@@ -113,10 +113,12 @@ const streamAudioWithFfmpeg = (audioUrl: string): PassThrough | null => {
       "ffmpeg",
       [
         "-re", // Read input at native frame rate
+        "-headers",
+        `Referer: https://www.youtube.com/\r\nUser-Agent: Mozilla/5.0`, // ✅ Fix: Pass headers for authentication
         "-i",
         audioUrl, // Input URL from yt-dlp
         "-f",
-        "opus", // Output format (Opus is best for Discord)
+        "opus", // Output format (Opus for Discord)
         "-ac",
         "2", // 2 audio channels
         "-b:a",
