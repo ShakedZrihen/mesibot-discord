@@ -114,21 +114,23 @@ const streamAudioWithFfmpeg = (audioUrl: string): PassThrough | null => {
       [
         "-re", // Read input at native frame rate
         "-headers",
-        `Referer: https://www.youtube.com/\r\nUser-Agent: Mozilla/5.0`, // ✅ Fix: Pass headers for authentication
+        `Referer: https://www.youtube.com/\r\nUser-Agent: Mozilla/5.0`, // ✅ VLC-like headers
         "-i",
-        audioUrl, // Input URL from yt-dlp
-        "-f",
-        "opus", // Output format (Opus for Discord)
-        "-ac",
-        "2", // 2 audio channels
+        audioUrl, // ✅ Input URL from yt-dlp
+        "-c:a",
+        "libopus", // ✅ Force Opus codec (best for Discord)
         "-b:a",
-        "128k", // 128kbps audio quality
+        "128k", // ✅ 128kbps audio quality
+        "-ac",
+        "2", // ✅ 2 audio channels
         "-ar",
-        "48000", // Sample rate 48kHz (Discord requirement)
+        "48000", // ✅ 48kHz sample rate (Discord requirement)
+        "-f",
+        "opus", // ✅ Output format for Discord
         "-loglevel",
-        "error", // Hide unnecessary logs
-        "-vn", // No video
-        "pipe:1" // Output as stream
+        "error", // ✅ Hide unnecessary logs
+        "-vn", // ✅ No video
+        "pipe:1" // ✅ Output as stream
       ],
       { stdio: ["ignore", "pipe", "ignore"] }
     );
