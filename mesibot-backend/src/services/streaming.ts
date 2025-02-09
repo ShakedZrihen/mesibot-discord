@@ -1,5 +1,6 @@
 import { createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
 import youtubedl from "youtube-dl-exec";
+import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
 
 /**
  * Helper function to play an audio file from a given URL.
@@ -75,7 +76,9 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       youtubeSkipDashManifest: true,
       noWarnings: true,
       preferFreeFormats: true,
-      addHeader: ["referer:youtube.com"]
+      addHeader: ["referer:youtube.com"],
+      proxy: `${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321
+`,
     })) as any;
 
     if (!videoInfo || !videoInfo.formats) {
