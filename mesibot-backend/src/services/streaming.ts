@@ -73,7 +73,9 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       noPlaylist: true,
       noCheckCertificates: true,
       youtubeSkipDashManifest: true,
-      addHeader: ["referer:youtube.com", "user-agent:googlebot"]
+      noWarnings: true,
+      preferFreeFormats: true,
+      addHeader: ["referer:youtube.com"]
     })) as any;
 
     if (!videoInfo || !videoInfo.formats) {
