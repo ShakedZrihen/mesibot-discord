@@ -1,9 +1,18 @@
 import { createAudioResource, AudioPlayerStatus, StreamType, demuxProbe } from "@discordjs/voice";
 import { spawn } from "child_process";
-import { PassThrough } from "stream";
+import { PassThrough, Readable } from "stream";
 import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
 
 const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
+
+// Silence Opus Packet (Needed for Discord)
+const silenceFrame = Buffer.from([0xf8, 0xff, 0xfe]);
+const silence = new Readable({
+  read() {
+    this.push(silenceFrame);
+    this.destroy();
+  }
+});
 
 /**
  * Plays an audio file from a given URL.
@@ -11,7 +20,7 @@ const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12
  */
 export const playAudio = async (player: any, url: string) => {
   try {
-    console.log("🎧 Fetching audio stream:", url);
+    console.log("▶️ Playing song:", url);
 
     const audioStream = await fetchAudioStream(url);
     if (!audioStream) {
@@ -23,11 +32,27 @@ export const playAudio = async (player: any, url: string) => {
     const { stream, type } = await demuxProbe(audioStream);
     const audioResource = createAudioResource(stream, { inputType: type });
 
-    player.play(audioResource);
+    console.log("🔄 Sending silence first to prevent early cut-off...");
 
-    player.on(AudioPlayerStatus.Playing, () => console.log("▶️ Now Playing in Discord!"));
-    player.on(AudioPlayerStatus.Idle, () => console.log("⏹️ Audio Finished!"));
-    player.on("error", (error: any) => console.error("❌ Audio Player Error:", error));
+    // ✅ Send 1-second silence before playing real audio (fix for Discord issues)
+    player.play(createAudioResource(silence, { inputType: StreamType.OggOpus }));
+
+    setTimeout(() => {
+      console.log("▶️ Now playing actual audio...");
+      player.play(audioResource);
+    }, 1000);
+
+    player.on(AudioPlayerStatus.Playing, () => {
+      console.log("✅ Discord bot is now playing!");
+    });
+
+    player.on(AudioPlayerStatus.Idle, () => {
+      console.log("⏹️ Audio Finished!");
+    });
+
+    player.on("error", (error: any) => {
+      console.error("❌ Audio Player Error:", error);
+    });
 
     return new Promise<void>((resolve) => {
       player.once(AudioPlayerStatus.Idle, resolve);
@@ -42,7 +67,7 @@ export const playAudio = async (player: any, url: string) => {
  */
 export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    console.log("🎧 Fetching audio stream:", url);
+    console.log("▶️ Playing song:", url);
 
     const audioStream = await fetchAudioStream(url);
     if (!audioStream) {
@@ -54,7 +79,15 @@ export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: ()
     const { stream, type } = await demuxProbe(audioStream);
     const audioResource = createAudioResource(stream, { inputType: type });
 
-    player.play(audioResource);
+    console.log("🔄 Sending silence first to prevent early cut-off...");
+
+    player.play(createAudioResource(silence, { inputType: StreamType.OggOpus }));
+
+    setTimeout(() => {
+      console.log("▶️ Now playing actual audio...");
+      player.play(audioResource);
+    }, 1000);
+
     player.once(AudioPlayerStatus.Idle, onEnd);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -90,13 +123,19 @@ export const fetchAudioStream = async (url: string): Promise<PassThrough | null>
         "-", // ✅ Outputs raw audio to stdout
         url
       ],
-      { stdio: ["ignore", "pipe", "ignore"] }
+      { stdio: ["ignore", "pipe", "pipe"] }
     );
 
     process.stdout.pipe(stream);
 
-    process.on("error", (error) => {
-      console.error("❌ yt-dlp error:", error);
+    process.stderr.on("data", (data) => {
+      console.error("❌ yt-dlp Error:", data.toString());
+    });
+
+    process.on("close", (code) => {
+      if (code !== 0) {
+        console.error(`❌ yt-dlp exited with error code ${code}`);
+      }
     });
 
     return stream;
