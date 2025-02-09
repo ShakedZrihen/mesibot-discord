@@ -80,6 +80,7 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       youtubeSkipDashManifest: true,
       noWarnings: true,
       preferFreeFormats: true,
+      format: "bestaudio[ext!=m3u8][ext!=mpd]",
       addHeader: ["referer:youtube.com"],
       proxy: `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`
     })) as any;
