@@ -1,6 +1,9 @@
-import { createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
+import { createAudioResource, AudioPlayerStatus, StreamType } from "@discordjs/voice";
 import youtubedl from "youtube-dl-exec";
+import { Readable } from "stream";
 import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
+
+const silenceFrame = Buffer.from([0xf8, 0xff, 0xfe]);
 
 /**
  * Helper function to play an audio file from a given URL.
@@ -23,7 +26,16 @@ export const playAudio = async (player: any, url: string) => {
 
     console.log("🎵 Audio resource created successfully!", audioResource);
 
-    player.play(audioResource);
+    const silence = new Readable({
+      read() {
+        this.push(silenceFrame);
+        this.destroy();
+      }
+    });
+
+    player.play(createAudioResource(silence, { inputType: StreamType.OggOpus }));
+
+    // player.play(audioResource);
 
     player.on(AudioPlayerStatus.Playing, () => console.log("▶️ Now Playing in Discord!"));
     player.on(AudioPlayerStatus.Idle, () => console.log("⏹️ Audio Finished!"));
@@ -54,8 +66,15 @@ export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: ()
     }
 
     console.log("🎵 Audio resource created successfully!", audioResource);
+    const silence = new Readable({
+      read() {
+        this.push(silenceFrame);
+        this.destroy();
+      }
+    });
 
-    player.play(audioResource);
+    player.play(createAudioResource(silence, { inputType: StreamType.OggOpus }));
+    // player.play(audioResource);
 
     player.once(AudioPlayerStatus.Idle, onEnd);
   } catch (error) {
@@ -77,8 +96,7 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       noWarnings: true,
       preferFreeFormats: true,
       addHeader: ["referer:youtube.com"],
-      proxy: `${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321
-`,
+      proxy: `${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`
     })) as any;
 
     if (!videoInfo || !videoInfo.formats) {
