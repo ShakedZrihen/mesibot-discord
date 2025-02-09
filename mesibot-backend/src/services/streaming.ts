@@ -71,6 +71,8 @@ export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: ()
  */
 export const fetchAudioUrl = async (url: string): Promise<string | null> => {
   try {
+    console.log("🎧 Fetching video info from yt-dlp...");
+
     const videoInfo = (await youtubedl(url, {
       dumpSingleJson: true,
       noPlaylist: true,
@@ -79,21 +81,32 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       noWarnings: true,
       preferFreeFormats: true,
       addHeader: ["referer:youtube.com"],
-      proxy: `${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`
+      proxy: `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`
     })) as any;
 
     if (!videoInfo || !videoInfo.formats) {
-      console.log("No video info");
+      console.error("❌ No video info found.");
       return null;
     }
 
-    // ✅ Pick the lowest quality audio format
-    let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);
+    console.log("🎵 Available formats:", videoInfo.formats.map((f: any) => f.format_id).join(", "));
+
+    // ✅ Pick a valid direct audio format (avoid HLS `.m3u8` URLs)
+    let selectedFormat = videoInfo.formats.find(
+      (f: any) => f.vcodec === "none" && f.acodec !== "none" && f.ext !== "m3u8"
+    );
+
     if (!selectedFormat) {
       selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
     }
 
-    return selectedFormat ? selectedFormat.url : null;
+    if (!selectedFormat) {
+      console.error("❌ No valid audio format found.");
+      return null;
+    }
+
+    console.log("✅ Selected format:", selectedFormat.format_id, selectedFormat.ext, selectedFormat.url);
+    return selectedFormat.url;
   } catch (error) {
     console.error("❌ Error fetching audio URL:", error);
     return null;
