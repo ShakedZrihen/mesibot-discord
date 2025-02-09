@@ -47,6 +47,8 @@ export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: ()
       throw new Error("No valid formats found.");
     }
 
+    console.log("🎧 Fetching audio stream:", videoInfo);
+
     const audioResource = createAudioResource(videoInfo);
 
     if (!audioResource) {
