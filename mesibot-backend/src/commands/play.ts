@@ -50,7 +50,6 @@ export const play = async ({ req, res }: interactionPayload) => {
       connection?.on("stateChange", (oldState, newState) => {
         console.log(`🔄 Voice Connection State Change: ${oldState.status} -> ${newState.status}`);
         if (newState.status === VoiceConnectionStatus.Ready) {
-          connection?.subscribe(player);
           console.log("✅ Player subscribed after connection is ready");
           resolve();
         }
