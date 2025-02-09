@@ -1,41 +1,29 @@
-import { createAudioResource, AudioPlayerStatus, StreamType } from "@discordjs/voice";
-import youtubedl from "youtube-dl-exec";
-import { Readable } from "stream";
+import { createAudioResource, AudioPlayerStatus, StreamType, demuxProbe } from "@discordjs/voice";
+import { spawn } from "child_process";
+import { PassThrough } from "stream";
 import { PROXY_PASSWORD, PROXY_USERNAME } from "../env";
 
-const silenceFrame = Buffer.from([0xf8, 0xff, 0xfe]);
+const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
 
 /**
- * Helper function to play an audio file from a given URL.
- * Waits until the audio ends before resolving.
+ * Plays an audio file from a given URL.
+ * Streams the audio directly to Discord.
  */
 export const playAudio = async (player: any, url: string) => {
   try {
-    const videoInfo = await fetchAudioUrl(url);
+    console.log("🎧 Fetching audio stream:", url);
 
-    if (!videoInfo) {
-      throw new Error("No valid formats found.");
+    const audioStream = await fetchAudioStream(url);
+    if (!audioStream) {
+      throw new Error("No valid audio stream found.");
     }
 
-    console.log("🎧 Fetching audio stream:", videoInfo);
+    console.log("🎵 Audio stream fetched successfully!");
 
-    const audioResource = createAudioResource(videoInfo);
-    if (!audioResource) {
-      throw new Error("Failed to create audio resource.");
-    }
+    const { stream, type } = await demuxProbe(audioStream);
+    const audioResource = createAudioResource(stream, { inputType: type });
 
-    console.log("🎵 Audio resource created successfully!", audioResource);
-
-    const silence = new Readable({
-      read() {
-        this.push(silenceFrame);
-        this.destroy();
-      }
-    });
-
-    player.play(createAudioResource(silence, { inputType: StreamType.OggOpus }));
-
-    // player.play(audioResource);
+    player.play(audioResource);
 
     player.on(AudioPlayerStatus.Playing, () => console.log("▶️ Now Playing in Discord!"));
     player.on(AudioPlayerStatus.Idle, () => console.log("⏹️ Audio Finished!"));
@@ -50,32 +38,23 @@ export const playAudio = async (player: any, url: string) => {
 };
 
 /**
- * Helper function to play an audio file and trigger an action when it ends.
+ * Plays an audio file and triggers an action when it ends.
  */
 export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: () => void) => {
   try {
-    const videoInfo = await fetchAudioUrl(url);
-    if (!videoInfo) {
-      throw new Error("No valid formats found.");
+    console.log("🎧 Fetching audio stream:", url);
+
+    const audioStream = await fetchAudioStream(url);
+    if (!audioStream) {
+      throw new Error("No valid audio stream found.");
     }
 
-    const audioResource = createAudioResource(videoInfo);
+    console.log("🎵 Audio stream fetched successfully!");
 
-    if (!audioResource) {
-      throw new Error("Failed to create audio resource.");
-    }
+    const { stream, type } = await demuxProbe(audioStream);
+    const audioResource = createAudioResource(stream, { inputType: type });
 
-    console.log("🎵 Audio resource created successfully!", audioResource);
-    const silence = new Readable({
-      read() {
-        this.push(silenceFrame);
-        this.destroy();
-      }
-    });
-
-    player.play(createAudioResource(silence, { inputType: StreamType.OggOpus }));
-    // player.play(audioResource);
-
+    player.play(audioResource);
     player.once(AudioPlayerStatus.Idle, onEnd);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -84,35 +63,45 @@ export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: ()
 };
 
 /**
- * Fetches the best low-quality audio format from a YouTube URL.
+ * Fetches an audio stream from YouTube and pipes it to Discord.
  */
-export const fetchAudioUrl = async (url: string): Promise<string | null> => {
+export const fetchAudioStream = async (url: string): Promise<PassThrough | null> => {
   try {
-    const videoInfo = (await youtubedl(url, {
-      dumpSingleJson: true,
-      noPlaylist: true,
-      noCheckCertificates: true,
-      youtubeSkipDashManifest: true,
-      noWarnings: true,
-      preferFreeFormats: true,
-      addHeader: ["referer:youtube.com"],
-      proxy: `${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`
-    })) as any;
+    console.log("🎧 Fetching stream via yt-dlp...");
 
-    if (!videoInfo || !videoInfo.formats) {
-      console.log("No video info");
-      return null;
-    }
+    const stream = new PassThrough();
 
-    // ✅ Pick the lowest quality audio format
-    let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);
-    if (!selectedFormat) {
-      selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
-    }
+    // ✅ Spawn yt-dlp process to stream audio
+    const process = spawn(
+      "yt-dlp",
+      [
+        "-f",
+        "bestaudio",
+        "--no-playlist",
+        "--no-check-certificate",
+        "--youtube-skip-dash-manifest",
+        "--no-warnings",
+        "--prefer-free-formats",
+        "--add-header",
+        "referer:youtube.com",
+        "--proxy",
+        PROXY_URL,
+        "-o",
+        "-", // ✅ Outputs raw audio to stdout
+        url
+      ],
+      { stdio: ["ignore", "pipe", "ignore"] }
+    );
 
-    return selectedFormat ? selectedFormat.url : null;
+    process.stdout.pipe(stream);
+
+    process.on("error", (error) => {
+      console.error("❌ yt-dlp error:", error);
+    });
+
+    return stream;
   } catch (error) {
-    console.error("❌ Error fetching audio URL:", error);
+    console.error("❌ Error fetching audio stream:", error);
     return null;
   }
 };
