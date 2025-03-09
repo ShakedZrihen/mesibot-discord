@@ -26,13 +26,16 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
 
   const debouncedFetchSongs = useRef(
     debounce(async (searchTerm) => {
-      if (searchTerm.length < 3) return;
+      abortController.current.abort();
+      abortController.current = new AbortController();
+
+      if (searchTerm.length < 3) {
+        setSuggestions([]);
+        return;
+      }
 
       setLoading(true);
       try {
-        abortController.current.abort();
-        abortController.current = new AbortController();
-
         const response = await mesibotApi.searchSongs(searchTerm, {signal: abortController.current.signal});
 
         if(response){
