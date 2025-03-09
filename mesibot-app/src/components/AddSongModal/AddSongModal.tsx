@@ -22,6 +22,7 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordFile, setRecordFile] = useState<File | null>(null);
+  const abortController = useRef(new AbortController());
 
   const debouncedFetchSongs = useRef(
     debounce(async (searchTerm) => {
@@ -29,8 +30,15 @@ export const AddSongModal = ({ open, onClose }: AddSongModalProps) => {
 
       setLoading(true);
       try {
-        const response = await mesibotApi.searchSongs(searchTerm);
-        setSuggestions(response);
+        abortController.current.abort();
+        abortController.current = new AbortController();
+
+        const response = await mesibotApi.searchSongs(searchTerm, {signal: abortController.current.signal});
+
+        if(response){
+          setSuggestions(response);
+        }
+
       } catch (error) {
         console.error("❌ Error fetching songs:", error);
       }
