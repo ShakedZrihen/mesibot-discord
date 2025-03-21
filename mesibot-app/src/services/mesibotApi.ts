@@ -15,9 +15,10 @@ const API_PATHS = {
   nextRoundShemkod: "/games/shemkod/next-round"
 };
 
-export const searchSongs = async (searchTerm: string) => {
+
+export const searchSongs = async (searchTerm: string, options?: { signal?: AbortSignal }) => {
   try {
-    const response = await fetch(`${BASE_URL}${API_PATHS.songs}?q=${searchTerm}`);
+    const response = await fetch(`${BASE_URL}${API_PATHS.songs}?q=${searchTerm}`, {signal: options?.signal});
     const data = await response.json();
     return data;
   } catch (error) {
