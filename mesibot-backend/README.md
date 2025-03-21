@@ -14,3 +14,31 @@
 DISCORD_APP_ID=<app_id>
 DISCORD_TOKEN=<generated_token>
 ```
+
+## managing the server
+
+npm install -g pm2
+
+start
+
+```bash
+pm2 start npm --name "mesibot-dev" -- run dev
+```
+
+list
+
+```bash
+pm2 list
+```
+
+logs
+
+```bash
+pm2 logs mesibot-dev
+```
+
+stop
+
+```bash
+pm2 stop mesibot-dev
+```
