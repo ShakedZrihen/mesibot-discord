@@ -1,8 +1,8 @@
-import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
+import { joinVoiceChannel, VoiceConnection } from "@discordjs/voice";
 import { interactionPayload, ResponseType } from "../types";
 import { client } from "../clients/discord";
 import { playlistService } from "../services/playlist";
-import { Connection, player } from "../clients/player";
+import { player } from "../clients/player";
 import { wsManager } from "..";
 import { playAudio, playAudioAndWaitForEnd } from "../services/streaming";
 
@@ -37,7 +37,7 @@ export const play = async ({ req, res }: interactionPayload) => {
       adapterCreator: guild?.voiceAdapterCreator as any
     });
 
-    Connection.setConnection(connection);
+    connection.subscribe(player);
 
     res.json({
       type: ResponseType.Immediate,
@@ -47,13 +47,11 @@ export const play = async ({ req, res }: interactionPayload) => {
     // ✅ Get the first song from the playlist
     const playlist = await playlistService.play(playlistId);
 
-    console.log({ playlist });
-
     if (!playlist || !playlist.currentPlaying) {
       throw new Error("No valid song found in the playlist.");
     }
 
-    // ✅ Play the first song **only after the connection is ready**
+    // ✅ Play the song (including intro if available)
     await playSong(player, playlistId, playlist.currentPlaying);
   } catch (error) {
     console.error("❌ Error playing audio:", error);
@@ -63,6 +61,7 @@ export const play = async ({ req, res }: interactionPayload) => {
     });
   }
 };
+
 /**
  * Plays a song and its intro (if available), then moves to the next song.
  */
