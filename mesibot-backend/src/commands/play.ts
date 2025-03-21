@@ -39,6 +39,11 @@ export const play = async ({ req, res }: interactionPayload) => {
 
     Connection.setConnection(connection);
 
+    res.json({
+      type: ResponseType.Immediate,
+      data: { content: `🎉 Started playing from playlist: ${playlistId}` }
+    });
+
     // ✅ Wait for the connection to be `ready` before playing
     await new Promise<void>((resolve) => {
       connection?.on(VoiceConnectionStatus.Ready, () => {
