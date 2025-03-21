@@ -2,9 +2,6 @@ import { createAudioResource, AudioPlayerStatus, StreamType } from "@discordjs/v
 import { spawn } from "child_process";
 import { PassThrough } from "stream";
 import youtubedl from "youtube-dl-exec";
-import { PROXY_USERNAME, PROXY_PASSWORD } from "../env";
-
-const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`;
 
 /**
  * Helper function to play an audio file from a given URL using ffmpeg to stream.
@@ -72,8 +69,7 @@ export const fetchAudioStream = async (url: string): Promise<PassThrough | null>
       youtubeSkipDashManifest: true,
       noWarnings: true,
       format: "bestaudio",
-      addHeader: ["referer:youtube.com"],
-      proxy: `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@geo.iproyal.com:12321`
+      addHeader: ["referer:youtube.com"]
     })) as any;
 
     if (!videoInfo || !videoInfo.formats) {

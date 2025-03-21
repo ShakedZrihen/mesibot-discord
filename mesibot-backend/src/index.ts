@@ -10,7 +10,7 @@ import http from "http";
 import WebSocketManager from "./websocket";
 
 const app = express();
-const PORT = 80;
+const PORT = 3000;
 
 // Create HTTP server
 const server = http.createServer(app);
