@@ -44,31 +44,10 @@ export const play = async ({ req, res }: interactionPayload) => {
       data: { content: `🎉 Started playing from playlist: ${playlistId}` }
     });
 
-    // ✅ Wait for the connection to be `ready` before playing
-    await new Promise<void>((resolve) => {
-      connection?.on(VoiceConnectionStatus.Ready, () => {
-        console.log("✅ Voice connection is ready!");
-        connection?.subscribe(player);
-        resolve();
-      });
-
-      connection?.on("stateChange", (oldState, newState) => {
-        console.log(`🔄 Voice Connection State Change: ${oldState.status} -> ${newState.status}`);
-        if (newState.status != VoiceConnectionStatus.Ready) {
-          console.log("⏳ Player Waiting for ready state");
-        }
-      });
-
-      connection?.on("error", (error) => console.error("❌ Voice Connection Error:", error));
-    });
-
-    res.json({
-      type: ResponseType.Immediate,
-      data: { content: `🎉 Started playing from playlist: ${playlistId}` }
-    });
-
     // ✅ Get the first song from the playlist
     const playlist = await playlistService.play(playlistId);
+
+    console.log({ playlist });
 
     if (!playlist || !playlist.currentPlaying) {
       throw new Error("No valid song found in the playlist.");
