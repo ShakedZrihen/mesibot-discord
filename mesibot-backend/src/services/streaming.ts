@@ -52,7 +52,11 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       addHeader: ["referer:youtube.com", "user-agent:googlebot"]
     })) as any;
 
-    if (!videoInfo || !videoInfo.formats) return null;
+    console.log({ videoInfo });
+
+    if (!videoInfo || !videoInfo.formats) {
+      return null;
+    }
 
     // ✅ Pick the lowest quality audio format
     let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);

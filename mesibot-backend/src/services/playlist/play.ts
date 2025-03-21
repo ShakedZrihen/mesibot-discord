@@ -3,7 +3,7 @@ import { Playlist } from "../../models/Playlist";
 export const play = async (playlistId: string) => {
   console.log("Getting songs from Playlist:", playlistId);
   const playlist = await Playlist.findById(playlistId);
-  console.log("Playlist info:", playlist);
+
   if (!playlist || playlist.songs.length === 0) {
     return null;
   }
