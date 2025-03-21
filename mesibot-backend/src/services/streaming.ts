@@ -1,5 +1,7 @@
 import { createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
 import youtubedl from "youtube-dl-exec";
+import prism from "prism-media";
+import { spawn } from "child_process";
 
 /**
  * Helper function to play an audio file from a given URL.
@@ -13,7 +15,7 @@ export const playAudio = async (player: any, url: string) => {
       throw new Error("No valid formats found.");
     }
 
-    const audioResource = createAudioResource(videoInfo);
+    const audioResource = fetchAudioResource(videoInfo);
     console.log({ audioResource });
     player.play(audioResource);
 
@@ -36,7 +38,7 @@ export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: ()
       throw new Error("No valid formats found.");
     }
 
-    const audioResource = createAudioResource(videoInfo);
+    const audioResource = fetchAudioResource(videoInfo);
     console.log({ audioResource });
 
     player.play(audioResource);
@@ -80,4 +82,36 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
     console.error("❌ Error fetching audio URL:", error);
     return null;
   }
+};
+
+export const fetchAudioResource = (url: string) => {
+  const ffmpeg = spawn(
+    "ffmpeg",
+    [
+      "-reconnect",
+      "1",
+      "-reconnect_streamed",
+      "1",
+      "-reconnect_delay_max",
+      "5",
+      "-i",
+      url,
+      "-analyzeduration",
+      "0",
+      "-loglevel",
+      "0",
+      "-f",
+      "opus",
+      "-ar",
+      "48000",
+      "-ac",
+      "2",
+      "pipe:1"
+    ],
+    { stdio: ["ignore", "pipe", "ignore"] }
+  );
+
+  const opusStream = ffmpeg.stdout.pipe(new prism.opus.Decoder({ rate: 48000, channels: 2, frameSize: 960 }));
+
+  return createAudioResource(opusStream);
 };
