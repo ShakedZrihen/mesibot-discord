@@ -65,12 +65,14 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       return null;
     }
 
-    // ✅ Pick the lowest quality audio format
-    let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);
-    
-    if (!selectedFormat) {
-      selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
-    }
+    // Filter audio-only formats
+    const audioFormats = videoInfo.formats.filter((f: any) => f.vcodec === "none" && f.acodec !== "none");
+
+    // Sort by bitrate descending
+    audioFormats.sort((a: any, b: any) => (b.abr || 0) - (a.abr || 0));
+
+    // Select the best one
+    const selectedFormat = audioFormats[0];
 
     return selectedFormat ? selectedFormat.url : null;
   } catch (error) {
