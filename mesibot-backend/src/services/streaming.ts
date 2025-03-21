@@ -15,7 +15,7 @@ export const playAudio = async (player: any, url: string) => {
     }
 
     const audioResource = fetchAudioResource(videoInfo);
-    console.log({ audioResource });
+
     player.play(audioResource);
 
     return new Promise<void>((resolve) => {
@@ -38,7 +38,6 @@ export const playAudioAndWaitForEnd = async (player: any, url: string, onEnd: ()
     }
 
     const audioResource = fetchAudioResource(videoInfo);
-    console.log({ audioResource });
 
     player.play(audioResource);
 
@@ -62,19 +61,16 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       addHeader: ["referer:youtube.com", "user-agent:googlebot"]
     })) as any;
 
-    console.log({ videoInfo });
-
     if (!videoInfo || !videoInfo.formats) {
       return null;
     }
 
     // ✅ Pick the lowest quality audio format
     let selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none" && f.abr <= 50);
+    
     if (!selectedFormat) {
       selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
     }
-
-    console.log("selectedFormat", selectedFormat);
 
     return selectedFormat ? selectedFormat.url : null;
   } catch (error) {
