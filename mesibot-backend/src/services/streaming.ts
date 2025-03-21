@@ -64,6 +64,8 @@ export const fetchAudioUrl = async (url: string): Promise<string | null> => {
       selectedFormat = videoInfo.formats.find((f: any) => f.vcodec === "none" && f.acodec !== "none");
     }
 
+    console.log("selectedFormat", selectedFormat);
+
     return selectedFormat ? selectedFormat.url : null;
   } catch (error) {
     console.error("❌ Error fetching audio URL:", error);
