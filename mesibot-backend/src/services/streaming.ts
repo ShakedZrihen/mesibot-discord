@@ -1,6 +1,5 @@
-import { createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
+import { createAudioResource, AudioPlayerStatus, StreamType } from "@discordjs/voice";
 import youtubedl from "youtube-dl-exec";
-import prism from "prism-media";
 import { spawn } from "child_process";
 
 /**
@@ -111,7 +110,7 @@ export const fetchAudioResource = (url: string) => {
     { stdio: ["ignore", "pipe", "ignore"] }
   );
 
-  const opusStream = ffmpeg.stdout.pipe(new prism.opus.Decoder({ rate: 48000, channels: 2, frameSize: 960 }));
-
-  return createAudioResource(opusStream);
+  return createAudioResource(ffmpeg.stdout, {
+    inputType: StreamType.OggOpus // This is key
+  });
 };
