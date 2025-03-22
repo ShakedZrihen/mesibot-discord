@@ -9,6 +9,18 @@ interface PlaylistUpdate {
   };
 }
 
+interface BuzzerClicked {
+  type: "buzzerPressed";
+
+  payload: {
+    user: {
+      name: string, 
+      avatar: string
+    },
+    showModal: boolean
+  };
+}
+
 class WebSocketManager {
   private wss: WebSocketServer;
   private partiesConnections: Map<string, Set<WebSocket>> = new Map();
@@ -70,6 +82,25 @@ class WebSocketManager {
     const update: PlaylistUpdate = {
       type: "playlistUpdate",
       payload: { songs, currentSong }
+    };
+
+    connections.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(update));
+      }
+    });
+  }
+
+
+  public notifyBuzzerPressed(partyId: string, user: { name: string, avatar: string}, showModal: boolean) {
+    const connections = this.partiesConnections.get(partyId);
+    if (!connections) {
+      return;
+    }
+
+    const update: BuzzerClicked = {
+      type: "buzzerPressed",
+      payload: { user, showModal }
     };
 
     connections.forEach((client) => {
