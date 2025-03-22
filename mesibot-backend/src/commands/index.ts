@@ -35,28 +35,28 @@ const commands = [
   {
     name: SupportedCommands.ping,
     description: "Replies with Pong!"
-  },
-  // TODO: implement below
-  {
-    name: SupportedCommands.clearQueue,
-    description: "Clear queue"
-  },
-  {
-    name: SupportedCommands.deleteSong,
-    description: "delete song from playlist",
-    options: [
-      {
-        name: "songName",
-        type: OptionType.string,
-        description: "song name",
-        required: true
-      }
-    ]
-  },
-  {
-    name: SupportedCommands.skip,
-    description: "skip the current song"
   }
+  // TODO: implement below
+  // {
+  //   name: SupportedCommands.clearQueue,
+  //   description: "Clear queue"
+  // },
+  // {
+  //   name: SupportedCommands.deleteSong,
+  //   description: "delete song from playlist",
+  //   options: [
+  //     {
+  //       name: "songName",
+  //       type: OptionType.string,
+  //       description: "song name",
+  //       required: true
+  //     }
+  //   ]
+  // },
+  // {
+  //   name: SupportedCommands.skip,
+  //   description: "skip the current song"
+  // }
 ];
 
 async function registerCommands() {

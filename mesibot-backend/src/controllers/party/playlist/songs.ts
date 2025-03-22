@@ -18,8 +18,7 @@ songsRouter.get("/", async (req, res) => {
       dumpSingleJson: true, // ✅ Ensures JSON response
       noCheckCertificates: true, // ✅ Faster request
       noWarnings: true, // ✅ Suppresses warnings
-      flatPlaylist: true, // ✅ Prevents downloading
-
+      flatPlaylist: true // ✅ Prevents downloading
     })) as any;
 
     const songs = results.entries.map((item: any) => ({

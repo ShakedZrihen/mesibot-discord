@@ -5,6 +5,9 @@ import { playlistService } from "../../services/playlist";
 import { addSongToPlaylist, downvoteSontInPlaylist, getPartyPlaylist, upvoteSongInPlaylist } from "./playlist/playlist";
 import { guessTheSongRouter } from "./games/guess-the-song";
 import { shemcodeRouter } from "./games/shemkod";
+import { stream } from "./stream";
+import { startHlsStream } from "./stream-hls";
+import path from "path";
 
 export const partyRouter = Router();
 
@@ -85,6 +88,8 @@ partyRouter.get("/:id", async (req: Request, res: Response): Promise<void> => {
     console.error("Error fetching party:", error);
   }
 });
+
+partyRouter.get("/:partyId/playlist/start", stream);
 
 partyRouter.get("/:partyId/playlist", getPartyPlaylist);
 partyRouter.post("/:partyId/playlist/add-song", addSongToPlaylist);
