@@ -6,8 +6,6 @@ import { addSongToPlaylist, downvoteSontInPlaylist, getPartyPlaylist, upvoteSong
 import { guessTheSongRouter } from "./games/guess-the-song";
 import { shemcodeRouter } from "./games/shemkod";
 import { stream } from "./stream";
-import { startHlsStream } from "./stream-hls";
-import path from "path";
 
 export const partyRouter = Router();
 
