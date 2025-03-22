@@ -22,7 +22,7 @@ const playSongToIcecast = (url: string): Promise<void> => {
       "44100",
       "-f",
       "mp3",
-      "icecast://source:hackme@localhost:8000/party"
+      "icecast://source:kolaculz@localhost:8000/party"
     ]);
 
     ffmpegProcess.stderr.on("data", (data) => {
