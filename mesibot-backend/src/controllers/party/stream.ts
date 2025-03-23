@@ -27,8 +27,6 @@ const ensureFifoExists = () => {
 const startIcecastStream = () => {
   const ffmpeg = spawn("ffmpeg", [
     "-re",
-    "-f",
-    "mp3",
     "-i",
     FIFO_PATH,
     "-vn",
