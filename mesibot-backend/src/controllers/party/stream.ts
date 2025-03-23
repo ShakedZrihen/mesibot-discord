@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from "child_process";
+import { spawn, spawnSync, ChildProcess } from "child_process";
 import { Request, Response } from "express";
 import { fetchAudioUrl } from "../../services/streaming";
 import { playlistService } from "../../services/playlist";
@@ -7,7 +7,9 @@ import { existsSync, createWriteStream } from "fs";
 
 const fifoPath = "/tmp/icecast-stream.pipe";
 let ffmpegProcess: ReturnType<typeof spawn> | null = null;
+let currentSongProcess: ChildProcess | null = null;
 let isStreaming = false;
+let isPaused = false;
 
 const ensureFifoExists = () => {
   if (!existsSync(fifoPath)) {
@@ -64,6 +66,7 @@ const writeToFifo = (url: string): Promise<void> => {
       "pipe:1"
     ]);
 
+    currentSongProcess = pipe;
     const fifoStream = createWriteStream(fifoPath);
     pipe.stdout.pipe(fifoStream);
 
@@ -97,7 +100,7 @@ const writeSilenceToFifo = (): Promise<void> => {
 };
 
 const streamPlaylistLoop = async (playlistId: string) => {
-  while (isStreaming) {
+  while (isStreaming && !isPaused) {
     const playlist = await playlistService.playNext(playlistId);
     const song = playlist?.currentPlaying;
 
@@ -167,5 +170,28 @@ export const stream = async (req: Request, res: Response) => {
   } catch (err) {
     console.error("❌ Stream crashed:", err);
     isStreaming = false;
+  }
+};
+
+export const pauseStream = () => {
+  if (currentSongProcess) {
+    currentSongProcess.kill("SIGKILL");
+    currentSongProcess = null;
+  }
+  isPaused = true;
+  console.log("⏸️ Stream paused");
+};
+
+export const resumeStream = async (playlistId: string) => {
+  if (!isPaused) return;
+  isPaused = false;
+  console.log("▶️ Resuming stream");
+  await streamPlaylistLoop(playlistId);
+};
+
+export const skipSong = () => {
+  if (currentSongProcess) {
+    console.log("⏭️ Skipping song");
+    currentSongProcess.kill("SIGKILL");
   }
 };
