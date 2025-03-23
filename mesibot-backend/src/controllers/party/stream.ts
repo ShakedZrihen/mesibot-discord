@@ -42,6 +42,43 @@ const playSongToIcecast = (url: string): Promise<void> => {
   });
 };
 
+const playSilenceToIcecast = (durationSeconds: number = 2): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const silenceProcess = spawn("ffmpeg", [
+      "-f",
+      "lavfi",
+      "-re",
+      "-i",
+      `anullsrc=r=44100:cl=stereo`,
+      "-t",
+      durationSeconds.toString(),
+      "-c:a",
+      "libmp3lame",
+      "-b:a",
+      "128k",
+      "-ar",
+      "44100",
+      "-f",
+      "mp3",
+      "icecast://source:kolaculz@localhost:8000/party"
+    ]);
+
+    silenceProcess.stderr.on("data", (data) => {
+      console.log("FFmpeg (silence):", data.toString());
+    });
+
+    silenceProcess.on("close", (code) => {
+      console.log("⏹️ Silence segment ended (code", code + ")");
+      resolve();
+    });
+
+    silenceProcess.on("error", (err) => {
+      console.error("❌ FFmpeg silence error:", err);
+      reject(err);
+    });
+  });
+};
+
 // 🔁 Recursive playlist loop
 const playNextSongToIcecast = async (playlistId: string) => {
   const playlist = await playlistService.playNext(playlistId);
@@ -60,6 +97,7 @@ const playNextSongToIcecast = async (playlistId: string) => {
   }
 
   console.log("🎵 Now streaming:", next.title);
+  await playSilenceToIcecast(2); // 🔇 2 seconds of silence between songs
   await playSongToIcecast(audioUrl);
   await playNextSongToIcecast(playlistId);
 };
