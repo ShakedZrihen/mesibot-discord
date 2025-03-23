@@ -1,34 +1,28 @@
-import { spawn, spawnSync, ChildProcessWithoutNullStreams } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import { Request, Response } from "express";
 import { fetchAudioUrl } from "../../services/streaming";
 import { playlistService } from "../../services/playlist";
 import { Party } from "../../models/Party";
-import https from "https";
-import http from "http";
-import fs from "fs";
+import { existsSync, createWriteStream } from "fs";
 
+const fifoPath = "/tmp/icecast-stream.pipe";
+let ffmpegProcess: ReturnType<typeof spawn> | null = null;
 let isStreaming = false;
-const FIFO_PATH = "/tmp/stream_input";
 
-// 🔧 Create FIFO pipe if missing
 const ensureFifoExists = () => {
-  if (!fs.existsSync(FIFO_PATH)) {
-    console.log("📁 FIFO not found. Creating...");
-    const result = spawnSync("mkfifo", [FIFO_PATH]);
-    if (result.status !== 0) {
-      console.error("❌ Failed to create FIFO:", result.stderr.toString());
-      throw new Error("Failed to create FIFO");
-    }
-    console.log("✅ FIFO created");
+  if (!existsSync(fifoPath)) {
+    console.log("📦 Creating FIFO pipe...");
+    spawnSync("mkfifo", [fifoPath]);
   }
 };
 
-// 🔊 Starts FFmpeg process that reads from FIFO and streams to Icecast
-const startIcecastStream = () => {
-  const ffmpeg = spawn("ffmpeg", [
+const startFfmpegStream = () => {
+  ensureFifoExists();
+
+  ffmpegProcess = spawn("ffmpeg", [
     "-re",
     "-i",
-    FIFO_PATH,
+    fifoPath,
     "-vn",
     "-c:a",
     "libmp3lame",
@@ -41,35 +35,48 @@ const startIcecastStream = () => {
     "icecast://source:kolaculz@localhost:8000/party"
   ]);
 
-  ffmpeg.stderr.on("data", (data) => {
+  ffmpegProcess?.stderr?.on("data", (data) => {
     console.log("FFmpeg:", data.toString());
   });
 
-  ffmpeg.on("close", () => {
-    console.log("⏹️ FFmpeg process closed");
-    isStreaming = false;
+  ffmpegProcess.on("close", () => {
+    console.log("❌ FFmpeg closed");
+    ffmpegProcess = null;
   });
 };
 
-// 🎶 Streams song audio into FIFO
-const streamToFifo = async (url: string): Promise<void> => {
+const writeToFifo = (url: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    const protocol = url.startsWith("https") ? https : http;
-    const fifo = fs.createWriteStream(FIFO_PATH, { flags: "a" });
+    const pipe = spawn("ffmpeg", [
+      "-ss",
+      "0",
+      "-i",
+      url,
+      "-f",
+      "mp3",
+      "-vn",
+      "-c:a",
+      "libmp3lame",
+      "-b:a",
+      "128k",
+      "-ar",
+      "44100",
+      "pipe:1"
+    ]);
 
-    protocol
-      .get(url, (res) => {
-        res.pipe(fifo);
-        res.on("end", resolve);
-        res.on("error", reject);
-      })
-      .on("error", reject);
+    const fifoStream = createWriteStream(fifoPath);
+    pipe.stdout.pipe(fifoStream);
+
+    pipe.on("close", () => resolve());
+    pipe.on("error", (err) => {
+      console.error("❌ Song stream error:", err);
+      reject(err);
+    });
   });
 };
 
-// 🔇 Streams 2s silence into FIFO
 const writeSilenceToFifo = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const silence = spawn("ffmpeg", [
       "-f",
       "lavfi",
@@ -82,41 +89,39 @@ const writeSilenceToFifo = (): Promise<void> => {
       "pipe:1"
     ]);
 
-    const fifo = fs.createWriteStream(FIFO_PATH, { flags: "a" });
+    const fifoStream = createWriteStream(fifoPath);
+    silence.stdout.pipe(fifoStream);
 
-    silence.stdout.pipe(fifo);
-    silence.on("close", resolve);
-    silence.on("error", reject);
+    silence.on("close", () => resolve());
   });
 };
 
-// 🔁 Playlist loop
-const streamLoop = async (playlistId: string) => {
+const streamPlaylistLoop = async (playlistId: string) => {
   while (isStreaming) {
     const playlist = await playlistService.playNext(playlistId);
     const song = playlist?.currentPlaying;
 
-    if (!song?.url) {
-      console.log("📭 No song, injecting silence");
-      await writeSilenceToFifo();
-      continue;
+    if (!song || !song.url) {
+      console.log("📭 Playlist empty. Ending stream.");
+      isStreaming = false;
+      return;
     }
 
-    const url = await fetchAudioUrl(song.url);
-    if (!url) {
-      console.warn("⚠️ Could not fetch song URL. Skipping...");
+    const audioUrl = await fetchAudioUrl(song.url);
+    if (!audioUrl) {
+      console.warn("⚠️ Skipping song: could not fetch URL");
       continue;
     }
 
     console.log("🎵 Streaming:", song.title);
-    await streamToFifo(url);
     await writeSilenceToFifo();
+    await writeToFifo(audioUrl);
   }
 };
 
-// 🎧 API route
 export const stream = async (req: Request, res: Response) => {
   const { partyId } = req.params;
+
   const party = await Party.findById(partyId).populate("playlist");
   const playlistId = party?.playlist?._id.toString();
 
@@ -130,24 +135,37 @@ export const stream = async (req: Request, res: Response) => {
     return;
   }
 
+  isStreaming = true;
+  res.status(200).send("Starting Icecast stream...");
+
   try {
     ensureFifoExists();
 
-    isStreaming = true;
-    res.status(200).send("Started streaming to Icecast");
-
-    startIcecastStream();
-
-    const playlist = await playlistService.play(playlistId);
-    if (playlist?.currentPlaying?.url) {
-      const url = await fetchAudioUrl(playlist.currentPlaying.url);
-      if (url) await streamToFifo(url);
+    if (!ffmpegProcess) {
+      startFfmpegStream();
     }
 
-    await streamLoop(playlistId);
+    const playlist = await playlistService.play(playlistId);
+    const song = playlist?.currentPlaying;
+
+    if (!song?.url) {
+      console.error("No current song to play");
+      isStreaming = false;
+      return;
+    }
+
+    const firstUrl = await fetchAudioUrl(song.url);
+    if (!firstUrl) {
+      console.error("Cannot fetch first song");
+      isStreaming = false;
+      return;
+    }
+
+    console.log("▶️ Starting stream with:", song.title);
+    await writeToFifo(firstUrl);
+    await streamPlaylistLoop(playlistId);
   } catch (err) {
-    console.error("❌ Stream startup failed:", err);
-    res.status(500).send("Stream failed to start");
+    console.error("❌ Stream crashed:", err);
     isStreaming = false;
   }
 };
