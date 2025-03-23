@@ -3,82 +3,116 @@ import { Request, Response } from "express";
 import { fetchAudioUrl } from "../../services/streaming";
 import { playlistService } from "../../services/playlist";
 import { Party } from "../../models/Party";
+import https from "https";
+import http from "http";
 
 let ffmpegProcess: ChildProcessWithoutNullStreams | null = null;
 let isStreaming = false;
 
-// 🔊 Stream 2 seconds of silence + song in one FFmpeg session
-const streamWithSilence = (url: string): Promise<void> => {
+// Generates 2 seconds of silence and writes it to the FFmpeg stdin
+const injectSilence = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    ffmpegProcess = spawn("ffmpeg", [
-      // Silence input
+    const silence = spawn("ffmpeg", [
       "-f",
       "lavfi",
+      "-i",
+      "anullsrc=channel_layout=stereo:sample_rate=44100",
       "-t",
       "2",
-      "-i",
-      "anullsrc=r=44100:cl=stereo",
-      // Song input
-      "-i",
-      url,
-      // Combine silence + song
-      "-filter_complex",
-      "[0][1]concat=n=2:v=0:a=1[outa]",
-      "-map",
-      "[outa]",
-      // Output settings
-      "-c:a",
-      "libmp3lame",
-      "-b:a",
-      "128k",
-      "-ar",
-      "44100",
       "-f",
       "mp3",
-      // Icecast output
-      "icecast://source:kolaculz@localhost:8000/party"
+      "pipe:1"
     ]);
 
-    ffmpegProcess.stderr.on("data", (data) => {
-      console.log("FFmpeg:", data.toString());
+    silence.stdout.on("data", (chunk) => {
+      ffmpegProcess?.stdin.write(chunk);
     });
 
-    ffmpegProcess.on("close", (code) => {
-      console.log("⏹️ FFmpeg stopped (code", code + ")");
-      ffmpegProcess = null;
-      resolve();
-    });
-
-    ffmpegProcess.on("error", (err) => {
-      console.error("❌ FFmpeg error:", err);
-      reject(err);
-    });
+    silence.on("close", () => resolve());
+    silence.on("error", (err) => reject(err));
   });
 };
 
-// 🔁 Recursive loop: stream each song with silence
-const playNextSongLoop = async (playlistId: string) => {
-  const playlist = await playlistService.playNext(playlistId);
-  const next = playlist?.currentPlaying;
+// Streams a song by piping its audio to FFmpeg stdin
+const streamSongToFFmpeg = async (url: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith("https") ? https : http;
 
-  if (!next || !next.url) {
-    console.log("📭 Playlist ended or empty.");
-    isStreaming = false;
-    return;
-  }
+    protocol
+      .get(url, (res) => {
+        res.on("data", (chunk) => {
+          ffmpegProcess?.stdin.write(chunk);
+        });
 
-  const audioUrl = await fetchAudioUrl(next.url);
-  if (!audioUrl) {
-    console.warn("⚠️ Could not fetch song URL. Skipping...");
-    return playNextSongLoop(playlistId);
-  }
+        res.on("end", () => {
+          console.log("✅ Finished sending song to FFmpeg");
+          resolve();
+        });
 
-  console.log("🎵 Now streaming:", next.title);
-  await streamWithSilence(audioUrl);
-  await playNextSongLoop(playlistId);
+        res.on("error", reject);
+      })
+      .on("error", reject);
+  });
 };
 
-// 🎧 API endpoint
+// Recursive playlist loop with silence between songs
+const streamPlaylistLoop = async (playlistId: string) => {
+  while (isStreaming) {
+    const playlist = await playlistService.playNext(playlistId);
+    const current = playlist?.currentPlaying;
+
+    if (!current || !current.url) {
+      console.log("📭 No more songs. Injecting silence...");
+      await injectSilence();
+      continue;
+    }
+
+    const url = await fetchAudioUrl(current.url);
+    if (!url) {
+      console.warn("⚠️ Skipping song: Unable to fetch audio URL");
+      continue;
+    }
+
+    console.log("🎵 Streaming song:", current.title);
+    await streamSongToFFmpeg(url);
+    await injectSilence();
+  }
+
+  ffmpegProcess?.stdin.end();
+  ffmpegProcess = null;
+};
+
+// Starts the persistent FFmpeg stream
+const startFFmpegStream = () => {
+  ffmpegProcess = spawn("ffmpeg", [
+    "-f",
+    "mp3",
+    "-i",
+    "pipe:0",
+    "-vn",
+    "-c:a",
+    "libmp3lame",
+    "-b:a",
+    "128k",
+    "-ar",
+    "44100",
+    "-f",
+    "mp3",
+    "icecast://source:kolaculz@localhost:8000/party"
+  ]);
+
+  ffmpegProcess.stderr.on("data", (data) => {
+    console.log("FFmpeg:", data.toString());
+  });
+
+  ffmpegProcess.on("close", (code) => {
+    console.log("⏹️ FFmpeg process exited with code:", code);
+    ffmpegProcess = null;
+    isStreaming = false;
+  });
+};
+
+// 🎧 API route
 export const stream = async (req: Request, res: Response) => {
   const { partyId } = req.params;
 
@@ -99,27 +133,11 @@ export const stream = async (req: Request, res: Response) => {
   res.status(200).send("Started streaming to Icecast.");
 
   try {
-    const playlist = await playlistService.play(playlistId);
-    const current = playlist?.currentPlaying;
-
-    if (!current || !current.url) {
-      console.error("No song to start with");
-      isStreaming = false;
-      return;
-    }
-
-    const firstAudioUrl = await fetchAudioUrl(current.url);
-    if (!firstAudioUrl) {
-      console.error("Cannot fetch first song URL");
-      isStreaming = false;
-      return;
-    }
-
-    console.log("▶️ Starting stream with:", current.title);
-    await streamWithSilence(firstAudioUrl);
-    await playNextSongLoop(playlistId);
-  } catch (error) {
-    console.error("❌ Stream crashed:", error);
+    startFFmpegStream();
+    await streamPlaylistLoop(playlistId);
+  } catch (err) {
+    console.error("❌ Stream crashed:", err);
     isStreaming = false;
+    ffmpegProcess?.kill("SIGINT");
   }
 };
