@@ -7,13 +7,26 @@ import { Party } from "../../models/Party";
 let ffmpegProcess: ChildProcessWithoutNullStreams | null = null;
 let isStreaming = false;
 
-const playSongToIcecast = (url: string): Promise<void> => {
+// 🔊 Stream 2 seconds of silence + song in one FFmpeg session
+const streamWithSilence = (url: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     ffmpegProcess = spawn("ffmpeg", [
-      "-re",
+      // Silence input
+      "-f",
+      "lavfi",
+      "-t",
+      "2",
+      "-i",
+      "anullsrc=r=44100:cl=stereo",
+      // Song input
       "-i",
       url,
-      "-vn",
+      // Combine silence + song
+      "-filter_complex",
+      "[0][1]concat=n=2:v=0:a=1[outa]",
+      "-map",
+      "[outa]",
+      // Output settings
       "-c:a",
       "libmp3lame",
       "-b:a",
@@ -22,6 +35,7 @@ const playSongToIcecast = (url: string): Promise<void> => {
       "44100",
       "-f",
       "mp3",
+      // Icecast output
       "icecast://source:kolaculz@localhost:8000/party"
     ]);
 
@@ -42,45 +56,8 @@ const playSongToIcecast = (url: string): Promise<void> => {
   });
 };
 
-const playSilenceToIcecast = (durationSeconds: number = 2): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const silenceProcess = spawn("ffmpeg", [
-      "-f",
-      "lavfi",
-      "-re",
-      "-i",
-      `anullsrc=r=44100:cl=stereo`,
-      "-t",
-      durationSeconds.toString(),
-      "-c:a",
-      "libmp3lame",
-      "-b:a",
-      "128k",
-      "-ar",
-      "44100",
-      "-f",
-      "mp3",
-      "icecast://source:kolaculz@localhost:8000/party"
-    ]);
-
-    silenceProcess.stderr.on("data", (data) => {
-      console.log("FFmpeg (silence):", data.toString());
-    });
-
-    silenceProcess.on("close", (code) => {
-      console.log("⏹️ Silence segment ended (code", code + ")");
-      resolve();
-    });
-
-    silenceProcess.on("error", (err) => {
-      console.error("❌ FFmpeg silence error:", err);
-      reject(err);
-    });
-  });
-};
-
-// 🔁 Recursive playlist loop
-const playNextSongToIcecast = async (playlistId: string) => {
+// 🔁 Recursive loop: stream each song with silence
+const playNextSongLoop = async (playlistId: string) => {
   const playlist = await playlistService.playNext(playlistId);
   const next = playlist?.currentPlaying;
 
@@ -93,16 +70,15 @@ const playNextSongToIcecast = async (playlistId: string) => {
   const audioUrl = await fetchAudioUrl(next.url);
   if (!audioUrl) {
     console.warn("⚠️ Could not fetch song URL. Skipping...");
-    return playNextSongToIcecast(playlistId);
+    return playNextSongLoop(playlistId);
   }
 
   console.log("🎵 Now streaming:", next.title);
-  await playSilenceToIcecast(2); // 🔇 2 seconds of silence between songs
-  await playSongToIcecast(audioUrl);
-  await playNextSongToIcecast(playlistId);
+  await streamWithSilence(audioUrl);
+  await playNextSongLoop(playlistId);
 };
 
-// 🎧 API route to start the Icecast stream
+// 🎧 API endpoint
 export const stream = async (req: Request, res: Response) => {
   const { partyId } = req.params;
 
@@ -140,8 +116,8 @@ export const stream = async (req: Request, res: Response) => {
     }
 
     console.log("▶️ Starting stream with:", current.title);
-    await playSongToIcecast(firstAudioUrl);
-    await playNextSongToIcecast(playlistId);
+    await streamWithSilence(firstAudioUrl);
+    await playNextSongLoop(playlistId);
   } catch (error) {
     console.error("❌ Stream crashed:", error);
     isStreaming = false;
