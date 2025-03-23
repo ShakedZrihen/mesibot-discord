@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+import { spawn, spawnSync, ChildProcessWithoutNullStreams } from "child_process";
 import { Request, Response } from "express";
 import { fetchAudioUrl } from "../../services/streaming";
 import { playlistService } from "../../services/playlist";
@@ -10,7 +10,20 @@ import fs from "fs";
 let isStreaming = false;
 const FIFO_PATH = "/tmp/stream_input";
 
-// Starts FFmpeg and pipes from FIFO to Icecast
+// 🔧 Create FIFO pipe if missing
+const ensureFifoExists = () => {
+  if (!fs.existsSync(FIFO_PATH)) {
+    console.log("📁 FIFO not found. Creating...");
+    const result = spawnSync("mkfifo", [FIFO_PATH]);
+    if (result.status !== 0) {
+      console.error("❌ Failed to create FIFO:", result.stderr.toString());
+      throw new Error("Failed to create FIFO");
+    }
+    console.log("✅ FIFO created");
+  }
+};
+
+// 🔊 Starts FFmpeg process that reads from FIFO and streams to Icecast
 const startIcecastStream = () => {
   const ffmpeg = spawn("ffmpeg", [
     "-re",
@@ -40,11 +53,10 @@ const startIcecastStream = () => {
   });
 };
 
-// Streams a URL to the FIFO (song or silence)
+// 🎶 Streams song audio into FIFO
 const streamToFifo = async (url: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith("https") ? https : http;
-
     const fifo = fs.createWriteStream(FIFO_PATH, { flags: "a" });
 
     protocol
@@ -57,7 +69,7 @@ const streamToFifo = async (url: string): Promise<void> => {
   });
 };
 
-// Writes 2s silence to FIFO using FFmpeg
+// 🔇 Streams 2s silence into FIFO
 const writeSilenceToFifo = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     const silence = spawn("ffmpeg", [
@@ -80,6 +92,7 @@ const writeSilenceToFifo = (): Promise<void> => {
   });
 };
 
+// 🔁 Playlist loop
 const streamLoop = async (playlistId: string) => {
   while (isStreaming) {
     const playlist = await playlistService.playNext(playlistId);
@@ -93,7 +106,7 @@ const streamLoop = async (playlistId: string) => {
 
     const url = await fetchAudioUrl(song.url);
     if (!url) {
-      console.warn("⚠️ Failed to fetch URL. Skipping...");
+      console.warn("⚠️ Could not fetch song URL. Skipping...");
       continue;
     }
 
@@ -103,6 +116,7 @@ const streamLoop = async (playlistId: string) => {
   }
 };
 
+// 🎧 API route
 export const stream = async (req: Request, res: Response) => {
   const { partyId } = req.params;
   const party = await Party.findById(partyId).populate("playlist");
@@ -118,21 +132,24 @@ export const stream = async (req: Request, res: Response) => {
     return;
   }
 
-  if (!fs.existsSync(FIFO_PATH)) {
-    fs.mkfifoSync?.(FIFO_PATH as any); // if you're on Linux, you can use mkfifoSync from a native binding or shell exec
-    console.log("✅ Created FIFO");
+  try {
+    ensureFifoExists();
+
+    isStreaming = true;
+    res.status(200).send("Started streaming to Icecast");
+
+    startIcecastStream();
+
+    const playlist = await playlistService.play(playlistId);
+    if (playlist?.currentPlaying?.url) {
+      const url = await fetchAudioUrl(playlist.currentPlaying.url);
+      if (url) await streamToFifo(url);
+    }
+
+    await streamLoop(playlistId);
+  } catch (err) {
+    console.error("❌ Stream startup failed:", err);
+    res.status(500).send("Stream failed to start");
+    isStreaming = false;
   }
-
-  isStreaming = true;
-  res.status(200).send("Started streaming");
-
-  startIcecastStream();
-
-  const playlist = await playlistService.play(playlistId);
-  if (playlist?.currentPlaying?.url) {
-    const url = await fetchAudioUrl(playlist.currentPlaying.url);
-    if (url) await streamToFifo(url);
-  }
-
-  await streamLoop(playlistId);
 };
