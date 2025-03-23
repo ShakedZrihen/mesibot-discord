@@ -83,7 +83,7 @@ partyRouter.get("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-partyRouter.get("/:partyId/playlist/start", stream);
+partyRouter.post("/:partyId/playlist/start", stream);
 partyRouter.post("/:partyId/playlist/pause", pauseStream);
 partyRouter.post("/:partyId/playlist/resume", resumeStream);
 partyRouter.post("/:partyId/playlist/skip", skipSong);

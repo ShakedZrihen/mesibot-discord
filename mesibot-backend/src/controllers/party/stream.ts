@@ -6,8 +6,11 @@ import { Party } from "../../models/Party";
 import { existsSync, createWriteStream } from "fs";
 
 const fifoPath = "/tmp/icecast-stream.pipe";
-let ffmpegProcess: ReturnType<typeof spawn> | null = null;
+
+let ffmpegProcess: ChildProcess | null = null;
 let currentSongProcess: ChildProcess | null = null;
+let currentResolve: (() => void) | null = null;
+
 let isStreaming = false;
 let isPaused = false;
 let currentPlaylistId: string | null = null;
@@ -38,7 +41,7 @@ const startFfmpegStream = () => {
     "icecast://source:kolaculz@localhost:8000/party"
   ]);
 
-  ffmpegProcess?.stderr?.on("data", (data) => {
+  ffmpegProcess.stderr?.on("data", (data) => {
     console.log("FFmpeg:", data.toString());
   });
 
@@ -68,13 +71,22 @@ const writeToFifo = (url: string): Promise<void> => {
     ]);
 
     currentSongProcess = pipe;
+    currentResolve = resolve;
+
     const fifoStream = createWriteStream(fifoPath);
     pipe.stdout.pipe(fifoStream);
 
-    pipe.on("close", () => resolve());
+    pipe.on("close", () => {
+      resolve();
+      currentSongProcess = null;
+      currentResolve = null;
+    });
+
     pipe.on("error", (err) => {
       console.error("❌ Song stream error:", err);
       reject(err);
+      currentSongProcess = null;
+      currentResolve = null;
     });
   });
 };
@@ -125,6 +137,7 @@ const streamPlaylistLoop = async (playlistId: string) => {
   }
 };
 
+// ▶️ Start stream
 export const stream = async (req: Request, res: Response) => {
   const { partyId } = req.params;
 
@@ -176,41 +189,44 @@ export const stream = async (req: Request, res: Response) => {
   }
 };
 
-export const pauseStream = async (req: Request, res: Response) => {
-  if (!isStreaming || isPaused) {
-    res.status(400).send("Stream not active or already paused");
-    return;
-  }
-
+// ⏸️ Pause stream
+export const pauseStream = (req: Request, res: Response) => {
   if (currentSongProcess) {
     currentSongProcess.kill("SIGKILL");
     currentSongProcess = null;
   }
+
   isPaused = true;
   console.log("⏸️ Stream paused");
-  res.status(200).send("Stream paused");
+  res.status(200).send("Paused stream");
 };
 
+// ▶️ Resume stream
 export const resumeStream = async (req: Request, res: Response) => {
   if (!isPaused || !currentPlaylistId) {
-    res.status(400).send("Stream is not paused or no playlist in memory");
+    res.status(400).send("Cannot resume");
     return;
   }
 
   isPaused = false;
-  console.log("▶️ Resuming stream");
+  console.log("▶️ Resuming stream...");
   streamPlaylistLoop(currentPlaylistId);
-  res.status(200).send("Stream resumed");
+  res.status(200).send("Resumed stream");
 };
 
-export const skipSong = async (req: Request, res: Response) => {
-  if (!currentSongProcess) {
-    res.status(400).send("No song is currently playing");
-    return;
-  }
+// ⏭️ Skip current song
+export const skipSong = (req: Request, res: Response) => {
+  if (currentSongProcess) {
+    console.log("⏭️ Skipping song");
+    currentSongProcess.kill("SIGKILL");
 
-  console.log("⏭️ Skipping song");
-  currentSongProcess.kill("SIGKILL");
-  currentSongProcess = null;
-  res.status(200).send("Song skipped");
+    if (currentResolve) {
+      currentResolve(); // Force continue loop
+      currentResolve = null;
+    }
+
+    res.status(200).send("Skipped song");
+  } else {
+    res.status(400).send("No song is currently playing");
+  }
 };
