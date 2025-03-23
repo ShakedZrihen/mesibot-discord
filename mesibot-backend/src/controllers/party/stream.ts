@@ -10,6 +10,7 @@ let ffmpegProcess: ReturnType<typeof spawn> | null = null;
 let currentSongProcess: ChildProcess | null = null;
 let isStreaming = false;
 let isPaused = false;
+let currentPlaylistId: string | null = null;
 
 const ensureFifoExists = () => {
   if (!existsSync(fifoPath)) {
@@ -100,6 +101,8 @@ const writeSilenceToFifo = (): Promise<void> => {
 };
 
 const streamPlaylistLoop = async (playlistId: string) => {
+  currentPlaylistId = playlistId;
+
   while (isStreaming && !isPaused) {
     const playlist = await playlistService.playNext(playlistId);
     const song = playlist?.currentPlaying;
@@ -173,25 +176,41 @@ export const stream = async (req: Request, res: Response) => {
   }
 };
 
-export const pauseStream = () => {
+export const pauseStream = async (req: Request, res: Response) => {
+  if (!isStreaming || isPaused) {
+    res.status(400).send("Stream not active or already paused");
+    return;
+  }
+
   if (currentSongProcess) {
     currentSongProcess.kill("SIGKILL");
     currentSongProcess = null;
   }
   isPaused = true;
   console.log("⏸️ Stream paused");
+  res.status(200).send("Stream paused");
 };
 
-export const resumeStream = async (playlistId: string) => {
-  if (!isPaused) return;
+export const resumeStream = async (req: Request, res: Response) => {
+  if (!isPaused || !currentPlaylistId) {
+    res.status(400).send("Stream is not paused or no playlist in memory");
+    return;
+  }
+
   isPaused = false;
   console.log("▶️ Resuming stream");
-  await streamPlaylistLoop(playlistId);
+  streamPlaylistLoop(currentPlaylistId);
+  res.status(200).send("Stream resumed");
 };
 
-export const skipSong = () => {
-  if (currentSongProcess) {
-    console.log("⏭️ Skipping song");
-    currentSongProcess.kill("SIGKILL");
+export const skipSong = async (req: Request, res: Response) => {
+  if (!currentSongProcess) {
+    res.status(400).send("No song is currently playing");
+    return;
   }
+
+  console.log("⏭️ Skipping song");
+  currentSongProcess.kill("SIGKILL");
+  currentSongProcess = null;
+  res.status(200).send("Song skipped");
 };
