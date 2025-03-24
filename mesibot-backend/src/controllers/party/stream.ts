@@ -14,7 +14,6 @@ let currentResolve: (() => void) | null = null;
 let isStreaming = false;
 let isPaused = false;
 let currentPlaylistId: string | null = null;
-let skipRequested = false;
 
 const ensureFifoExists = () => {
   if (!existsSync(fifoPath)) {
@@ -72,19 +71,22 @@ const writeToFifo = (url: string): Promise<void> => {
     ]);
 
     currentSongProcess = pipe;
-    currentResolve = () => {
-      currentSongProcess = null;
-      currentResolve = null;
-      resolve();
-    };
-
     const fifoStream = createWriteStream(fifoPath);
     pipe.stdout.pipe(fifoStream);
 
-    pipe.on("close", () => {
-      if (currentResolve) currentResolve();
-    });
+    const onFinish = () => {
+      currentSongProcess = null;
+      currentResolve = null;
+      fifoStream.end();
+      resolve();
+    };
 
+    currentResolve = () => {
+      pipe.kill("SIGKILL");
+      onFinish();
+    };
+
+    pipe.on("close", onFinish);
     pipe.on("error", (err) => {
       console.error("❌ Song stream error:", err);
       reject(err);
@@ -110,7 +112,6 @@ const writeSilenceToFifo = (): Promise<void> => {
 
     const fifoStream = createWriteStream(fifoPath);
     silence.stdout.pipe(fifoStream);
-
     silence.on("close", () => resolve());
   });
 };
@@ -129,6 +130,7 @@ const streamPlaylistLoop = async (playlistId: string) => {
     }
 
     const audioUrl = await fetchAudioUrl(song.url);
+
     if (!audioUrl) {
       console.warn("⚠️ Skipping song: could not fetch URL");
       continue;
@@ -136,9 +138,8 @@ const streamPlaylistLoop = async (playlistId: string) => {
 
     console.log("🎵 Streaming:", song.title);
     await writeSilenceToFifo();
-
-    skipRequested = false;
     await writeToFifo(audioUrl);
+    console.log("✅ Finished streaming song. Moving to next...");
   }
 };
 
@@ -163,14 +164,10 @@ export const stream = async (req: Request, res: Response) => {
 
   try {
     ensureFifoExists();
-
-    if (!ffmpegProcess) {
-      startFfmpegStream();
-    }
+    if (!ffmpegProcess) startFfmpegStream();
 
     const playlist = await playlistService.play(playlistId);
     const song = playlist?.currentPlaying;
-
     if (!song?.url) {
       console.error("No current song to play");
       isStreaming = false;
@@ -178,6 +175,7 @@ export const stream = async (req: Request, res: Response) => {
     }
 
     const firstUrl = await fetchAudioUrl(song.url);
+
     if (!firstUrl) {
       console.error("Cannot fetch first song");
       isStreaming = false;
@@ -219,13 +217,9 @@ export const resumeStream = async (req: Request, res: Response) => {
 export const skipSong = (req: Request, res: Response) => {
   if (currentSongProcess && currentResolve) {
     console.log("⏭️ Skipping song");
-    currentSongProcess.kill("SIGKILL");
     currentResolve();
-    currentSongProcess = null;
-    currentResolve = null;
     res.status(200).send("Skipped song");
   } else {
-    console.warn("⚠️ No active song to skip");
     res.status(400).send("No song is currently playing");
   }
 };
