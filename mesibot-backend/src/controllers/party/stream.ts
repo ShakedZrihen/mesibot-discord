@@ -107,16 +107,21 @@ const writeSilenceToFifo = (): Promise<void> => {
 
     const fifoStream = createWriteStream(fifoPath);
     silence.stdout.pipe(fifoStream);
-
     silence.on("close", () => resolve());
   });
 };
 
-const streamPlaylistLoop = async (playlistId: string) => {
-  currentPlaylistId = playlistId;
+const streamPlaylistLoop = async () => {
+  if (!currentPlaylistId) return;
 
-  while (isStreaming && !isPaused) {
-    const playlist = await playlistService.playNext(playlistId);
+  while (isStreaming) {
+    if (isPaused) {
+      console.log("⏸️ Streaming paused...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      continue;
+    }
+
+    const playlist = await playlistService.playNext(currentPlaylistId);
     const song = playlist?.currentPlaying;
 
     if (!song || !song.url) {
@@ -154,15 +159,15 @@ export const stream = async (req: Request, res: Response) => {
     return;
   }
 
+  currentPlaylistId = playlistId;
   isStreaming = true;
+  isPaused = false;
+
   res.status(200).send("Starting Icecast stream...");
 
   try {
     ensureFifoExists();
-
-    if (!ffmpegProcess) {
-      startFfmpegStream();
-    }
+    if (!ffmpegProcess) startFfmpegStream();
 
     const playlist = await playlistService.play(playlistId);
     const song = playlist?.currentPlaying;
@@ -182,7 +187,7 @@ export const stream = async (req: Request, res: Response) => {
 
     console.log("▶️ Starting stream with:", song.title);
     await writeToFifo(firstUrl);
-    await streamPlaylistLoop(playlistId);
+    streamPlaylistLoop(); // no await – continues loop
   } catch (err) {
     console.error("❌ Stream crashed:", err);
     isStreaming = false;
@@ -210,7 +215,7 @@ export const resumeStream = async (req: Request, res: Response) => {
 
   isPaused = false;
   console.log("▶️ Resuming stream...");
-  streamPlaylistLoop(currentPlaylistId);
+  streamPlaylistLoop();
   res.status(200).send("Resumed stream");
 };
 
@@ -221,7 +226,7 @@ export const skipSong = (req: Request, res: Response) => {
     currentSongProcess.kill("SIGKILL");
 
     if (currentResolve) {
-      currentResolve(); // Force continue loop
+      currentResolve(); // Allow the loop to continue
       currentResolve = null;
     }
 
