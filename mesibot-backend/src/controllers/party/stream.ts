@@ -71,27 +71,26 @@ const writeToFifo = (url: string): Promise<void> => {
     ]);
 
     currentSongProcess = pipe;
+    currentResolve = () => {
+      pipe.kill("SIGKILL");
+    };
+
     const fifoStream = createWriteStream(fifoPath);
     pipe.stdout.pipe(fifoStream);
 
-    const onFinish = () => {
+    pipe.on("close", () => {
+      fifoStream.end(); // Prevent write after end
       currentSongProcess = null;
       currentResolve = null;
-      fifoStream.end();
       resolve();
-    };
+    });
 
-    currentResolve = () => {
-      pipe.kill("SIGKILL");
-      onFinish();
-    };
-
-    pipe.on("close", onFinish);
     pipe.on("error", (err) => {
       console.error("❌ Song stream error:", err);
-      reject(err);
+      fifoStream.end();
       currentSongProcess = null;
       currentResolve = null;
+      reject(err);
     });
   });
 };
@@ -112,7 +111,11 @@ const writeSilenceToFifo = (): Promise<void> => {
 
     const fifoStream = createWriteStream(fifoPath);
     silence.stdout.pipe(fifoStream);
-    silence.on("close", () => resolve());
+
+    silence.on("close", () => {
+      fifoStream.end();
+      resolve();
+    });
   });
 };
 
@@ -130,7 +133,6 @@ const streamPlaylistLoop = async (playlistId: string) => {
     }
 
     const audioUrl = await fetchAudioUrl(song.url);
-
     if (!audioUrl) {
       console.warn("⚠️ Skipping song: could not fetch URL");
       continue;
@@ -175,7 +177,6 @@ export const stream = async (req: Request, res: Response) => {
     }
 
     const firstUrl = await fetchAudioUrl(song.url);
-
     if (!firstUrl) {
       console.error("Cannot fetch first song");
       isStreaming = false;
