@@ -10,11 +10,11 @@ const fifoPath = "/tmp/icecast-stream.pipe";
 let ffmpegProcess: ChildProcess | null = null;
 let currentSongProcess: ChildProcess | null = null;
 let currentResolve: (() => void) | null = null;
-let currentPlayingPromise: Promise<void> | null = null;
 
 let isStreaming = false;
 let isPaused = false;
 let currentPlaylistId: string | null = null;
+let skipRequested = false;
 
 const ensureFifoExists = () => {
   if (!existsSync(fifoPath)) {
@@ -53,7 +53,7 @@ const startFfmpegStream = () => {
 };
 
 const writeToFifo = (url: string): Promise<void> => {
-  currentPlayingPromise = new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const pipe = spawn("ffmpeg", [
       "-ss",
       "0",
@@ -72,16 +72,17 @@ const writeToFifo = (url: string): Promise<void> => {
     ]);
 
     currentSongProcess = pipe;
-    currentResolve = resolve;
+    currentResolve = () => {
+      currentSongProcess = null;
+      currentResolve = null;
+      resolve();
+    };
 
     const fifoStream = createWriteStream(fifoPath);
     pipe.stdout.pipe(fifoStream);
 
     pipe.on("close", () => {
-      resolve();
-      currentSongProcess = null;
-      currentResolve = null;
-      currentPlayingPromise = null;
+      if (currentResolve) currentResolve();
     });
 
     pipe.on("error", (err) => {
@@ -89,11 +90,8 @@ const writeToFifo = (url: string): Promise<void> => {
       reject(err);
       currentSongProcess = null;
       currentResolve = null;
-      currentPlayingPromise = null;
     });
   });
-
-  return currentPlayingPromise;
 };
 
 const writeSilenceToFifo = (): Promise<void> => {
@@ -138,6 +136,8 @@ const streamPlaylistLoop = async (playlistId: string) => {
 
     console.log("🎵 Streaming:", song.title);
     await writeSilenceToFifo();
+
+    skipRequested = false;
     await writeToFifo(audioUrl);
   }
 };
@@ -216,26 +216,16 @@ export const resumeStream = async (req: Request, res: Response) => {
   res.status(200).send("Resumed stream");
 };
 
-export const skipSong = async (req: Request, res: Response) => {
-  if (!currentSongProcess) {
-    if (currentPlayingPromise) {
-      console.log("⏭️ Waiting for song to start before skipping...");
-      await currentPlayingPromise;
-    } else {
-      res.status(400).send("No song is currently playing");
-      return;
-    }
-  }
-
-  if (currentSongProcess) {
+export const skipSong = (req: Request, res: Response) => {
+  if (currentSongProcess && currentResolve) {
     console.log("⏭️ Skipping song");
     currentSongProcess.kill("SIGKILL");
-
-    if (currentResolve) {
-      currentResolve();
-      currentResolve = null;
-    }
-
+    currentResolve();
+    currentSongProcess = null;
+    currentResolve = null;
     res.status(200).send("Skipped song");
+  } else {
+    console.warn("⚠️ No active song to skip");
+    res.status(400).send("No song is currently playing");
   }
 };
