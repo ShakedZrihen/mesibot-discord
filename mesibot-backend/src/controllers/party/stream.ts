@@ -10,6 +10,7 @@ const fifoPath = "/tmp/icecast-stream.pipe";
 let ffmpegProcess: ChildProcess | null = null;
 let currentSongProcess: ChildProcess | null = null;
 let currentResolve: (() => void) | null = null;
+let currentPlayingPromise: Promise<void> | null = null;
 
 let isStreaming = false;
 let isPaused = false;
@@ -52,7 +53,7 @@ const startFfmpegStream = () => {
 };
 
 const writeToFifo = (url: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
+  currentPlayingPromise = new Promise((resolve, reject) => {
     const pipe = spawn("ffmpeg", [
       "-ss",
       "0",
@@ -80,6 +81,7 @@ const writeToFifo = (url: string): Promise<void> => {
       resolve();
       currentSongProcess = null;
       currentResolve = null;
+      currentPlayingPromise = null;
     });
 
     pipe.on("error", (err) => {
@@ -87,8 +89,11 @@ const writeToFifo = (url: string): Promise<void> => {
       reject(err);
       currentSongProcess = null;
       currentResolve = null;
+      currentPlayingPromise = null;
     });
   });
+
+  return currentPlayingPromise;
 };
 
 const writeSilenceToFifo = (): Promise<void> => {
@@ -107,21 +112,16 @@ const writeSilenceToFifo = (): Promise<void> => {
 
     const fifoStream = createWriteStream(fifoPath);
     silence.stdout.pipe(fifoStream);
+
     silence.on("close", () => resolve());
   });
 };
 
-const streamPlaylistLoop = async () => {
-  if (!currentPlaylistId) return;
+const streamPlaylistLoop = async (playlistId: string) => {
+  currentPlaylistId = playlistId;
 
-  while (isStreaming) {
-    if (isPaused) {
-      console.log("⏸️ Streaming paused...");
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      continue;
-    }
-
-    const playlist = await playlistService.playNext(currentPlaylistId);
+  while (isStreaming && !isPaused) {
+    const playlist = await playlistService.playNext(playlistId);
     const song = playlist?.currentPlaying;
 
     if (!song || !song.url) {
@@ -142,7 +142,6 @@ const streamPlaylistLoop = async () => {
   }
 };
 
-// ▶️ Start stream
 export const stream = async (req: Request, res: Response) => {
   const { partyId } = req.params;
 
@@ -159,15 +158,15 @@ export const stream = async (req: Request, res: Response) => {
     return;
   }
 
-  currentPlaylistId = playlistId;
   isStreaming = true;
-  isPaused = false;
-
   res.status(200).send("Starting Icecast stream...");
 
   try {
     ensureFifoExists();
-    if (!ffmpegProcess) startFfmpegStream();
+
+    if (!ffmpegProcess) {
+      startFfmpegStream();
+    }
 
     const playlist = await playlistService.play(playlistId);
     const song = playlist?.currentPlaying;
@@ -187,14 +186,13 @@ export const stream = async (req: Request, res: Response) => {
 
     console.log("▶️ Starting stream with:", song.title);
     await writeToFifo(firstUrl);
-    streamPlaylistLoop(); // no await – continues loop
+    await streamPlaylistLoop(playlistId);
   } catch (err) {
     console.error("❌ Stream crashed:", err);
     isStreaming = false;
   }
 };
 
-// ⏸️ Pause stream
 export const pauseStream = (req: Request, res: Response) => {
   if (currentSongProcess) {
     currentSongProcess.kill("SIGKILL");
@@ -206,7 +204,6 @@ export const pauseStream = (req: Request, res: Response) => {
   res.status(200).send("Paused stream");
 };
 
-// ▶️ Resume stream
 export const resumeStream = async (req: Request, res: Response) => {
   if (!isPaused || !currentPlaylistId) {
     res.status(400).send("Cannot resume");
@@ -215,23 +212,30 @@ export const resumeStream = async (req: Request, res: Response) => {
 
   isPaused = false;
   console.log("▶️ Resuming stream...");
-  streamPlaylistLoop();
+  streamPlaylistLoop(currentPlaylistId);
   res.status(200).send("Resumed stream");
 };
 
-// ⏭️ Skip current song
-export const skipSong = (req: Request, res: Response) => {
+export const skipSong = async (req: Request, res: Response) => {
+  if (!currentSongProcess) {
+    if (currentPlayingPromise) {
+      console.log("⏭️ Waiting for song to start before skipping...");
+      await currentPlayingPromise;
+    } else {
+      res.status(400).send("No song is currently playing");
+      return;
+    }
+  }
+
   if (currentSongProcess) {
     console.log("⏭️ Skipping song");
     currentSongProcess.kill("SIGKILL");
 
     if (currentResolve) {
-      currentResolve(); // Allow the loop to continue
+      currentResolve();
       currentResolve = null;
     }
 
     res.status(200).send("Skipped song");
-  } else {
-    res.status(400).send("No song is currently playing");
   }
 };
