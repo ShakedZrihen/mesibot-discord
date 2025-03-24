@@ -83,10 +83,10 @@ partyRouter.get("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-partyRouter.post("/:partyId/playlist/start", stream);
-partyRouter.post("/:partyId/playlist/pause", pauseStream);
-partyRouter.post("/:partyId/playlist/resume", resumeStream);
-partyRouter.post("/:partyId/playlist/skip", skipSong);
+partyRouter.get("/:partyId/playlist/start", stream);
+partyRouter.get("/:partyId/playlist/pause", pauseStream);
+partyRouter.get("/:partyId/playlist/resume", resumeStream);
+partyRouter.get("/:partyId/playlist/skip", skipSong);
 
 partyRouter.get("/:partyId/playlist", getPartyPlaylist);
 partyRouter.post("/:partyId/playlist/add-song", addSongToPlaylist);
