@@ -79,7 +79,9 @@ const writeToFifo = (url: string): Promise<void> => {
     pipe.stdout.pipe(fifoStream);
 
     pipe.on("close", () => {
-      fifoStream.end(); // Prevent write after end
+      try {
+        fifoStream.destroy();
+      } catch (e) {}
       currentSongProcess = null;
       currentResolve = null;
       resolve();
