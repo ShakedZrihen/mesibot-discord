@@ -17,6 +17,7 @@ const ICECAST_URL = `icecast://source:RKydjxrD@34.165.253.197:8010/stream`;
 const streamSongToIcecast = (url: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     const ffmpeg = spawn("ffmpeg", [
+      "-re", // 🔥 Real-time streaming
       "-reconnect",
       "1",
       "-reconnect_streamed",
@@ -36,7 +37,6 @@ const streamSongToIcecast = (url: string): Promise<void> => {
       "mp3",
       ICECAST_URL
     ]);
-
     currentSongProcess = ffmpeg;
     currentResolve = () => ffmpeg.kill("SIGKILL");
 
