@@ -12,7 +12,7 @@ let isStreaming = false;
 let isPaused = false;
 let currentPlaylistId: string | null = null;
 
-const ICECAST_URL = `icecast://dj_username:${DJ_PASS}@34.165.253.197:8010/`;
+const ICECAST_URL = `icecast://dj_username:${DJ_PASS}@34.165.253.197:8010/radio.mp3`;
 
 const streamSongToIcecast = (url: string): Promise<void> => {
   return new Promise((resolve, reject) => {
