@@ -40,17 +40,12 @@ export const SongRow = (props: SongRowProps) => {
   const upvote = () => upvoteSong(party._id, _id, user, playlistId);
   const downvote = () => downvoteSong(party._id, _id, user, playlistId);
 
-  const handleClickVote: MouseEventHandler<HTMLButtonElement> = (e) => {
-    const name = e.currentTarget.name;
-    name === "like" ? upvote() : downvote();
-  };
-
-  const handleSwipeVote = (direction: Direction) => {
+  const handleSwipe = (direction: Direction) => {
     direction === "left" ? downvote() : upvote();
   };
 
   return (
-    <ListSwiperItem onSwipe={handleSwipeVote}>
+    <ListSwiperItem onSwipe={handleSwipe}>
       <ListSwiperAction direction="left">
         <ThumbUpIcon sx={{ color: Colors.goodGreen }} />
       </ListSwiperAction>
@@ -69,16 +64,14 @@ export const SongRow = (props: SongRowProps) => {
             <IconButton
               sx={{ color: Colors.goodGreen }}
               size="small"
-              name="like"
-              onClick={handleClickVote}
+              onClick={() => upvote()}
             >
               <ThumbUpIcon fontSize="inherit" />
             </IconButton>
             <IconButton
               size="small"
               sx={{ color: Colors.vividPink }}
-              name="dislike"
-              onClick={handleClickVote}
+              onClick={() => downvote()}
             >
               <ThumbDownIcon fontSize="inherit" />
             </IconButton>
