@@ -12,7 +12,7 @@ let isStreaming = false;
 let isPaused = false;
 let currentPlaylistId: string | null = null;
 
-const ICECAST_URL = `icecast://mesibot:mesibot@34.165.253.197:8005/stream`;
+const ICECAST_URL = `icecast://source:RKydjxrD@34.165.253.197:8005/stream`;
 
 const streamSongToIcecast = (url: string): Promise<void> => {
   return new Promise((resolve, reject) => {
