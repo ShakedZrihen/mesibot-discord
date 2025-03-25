@@ -1,13 +1,10 @@
-import { spawn, spawnSync, ChildProcess } from "child_process";
+import { spawn, ChildProcess } from "child_process";
 import { Request, Response } from "express";
 import { fetchAudioUrl } from "../../services/streaming";
 import { playlistService } from "../../services/playlist";
 import { Party } from "../../models/Party";
-import { existsSync, createWriteStream } from "fs";
+import { DJ_PASS } from "../../env";
 
-const fifoPath = "/tmp/icecast-stream.pipe";
-
-let ffmpegProcess: ChildProcess | null = null;
 let currentSongProcess: ChildProcess | null = null;
 let currentResolve: (() => void) | null = null;
 
@@ -15,51 +12,19 @@ let isStreaming = false;
 let isPaused = false;
 let currentPlaylistId: string | null = null;
 
-const ensureFifoExists = () => {
-  if (!existsSync(fifoPath)) {
-    console.log("📦 Creating FIFO pipe...");
-    spawnSync("mkfifo", [fifoPath]);
-  }
-};
+const ICECAST_URL = `icecast://dj_username:${DJ_PASS}@34.165.253.197:8010/`;
 
-const startFfmpegStream = () => {
-  ensureFifoExists();
-
-  ffmpegProcess = spawn("ffmpeg", [
-    "-re",
-    "-i",
-    fifoPath,
-    "-vn",
-    "-c:a",
-    "libmp3lame",
-    "-b:a",
-    "128k",
-    "-ar",
-    "44100",
-    "-f",
-    "mp3",
-    "icecast://source:kolaculz@localhost:8000/party"
-  ]);
-
-  ffmpegProcess.stderr?.on("data", (data) => {
-    console.log("FFmpeg:", data.toString());
-  });
-
-  ffmpegProcess.on("close", () => {
-    console.log("❌ FFmpeg closed");
-    ffmpegProcess = null;
-  });
-};
-
-const writeToFifo = (url: string): Promise<void> => {
+const streamSongToIcecast = (url: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    const pipe = spawn("ffmpeg", [
-      "-ss",
-      "0",
+    const ffmpeg = spawn("ffmpeg", [
+      "-reconnect",
+      "1",
+      "-reconnect_streamed",
+      "1",
+      "-reconnect_delay_max",
+      "5",
       "-i",
       url,
-      "-f",
-      "mp3",
       "-vn",
       "-c:a",
       "libmp3lame",
@@ -67,56 +32,29 @@ const writeToFifo = (url: string): Promise<void> => {
       "128k",
       "-ar",
       "44100",
-      "pipe:1"
+      "-f",
+      "mp3",
+      ICECAST_URL
     ]);
 
-    currentSongProcess = pipe;
-    currentResolve = () => {
-      pipe.kill("SIGKILL");
-    };
+    currentSongProcess = ffmpeg;
+    currentResolve = () => ffmpeg.kill("SIGKILL");
 
-    const fifoStream = createWriteStream(fifoPath);
-    pipe.stdout.pipe(fifoStream);
+    ffmpeg.stderr?.on("data", (data) => {
+      console.log("FFmpeg:", data.toString());
+    });
 
-    pipe.on("close", () => {
-      try {
-        fifoStream.destroy();
-      } catch (e) {}
+    ffmpeg.on("close", () => {
       currentSongProcess = null;
       currentResolve = null;
       resolve();
     });
 
-    pipe.on("error", (err) => {
-      console.error("❌ Song stream error:", err);
-      fifoStream.end();
+    ffmpeg.on("error", (err) => {
+      console.error("❌ FFmpeg error:", err);
       currentSongProcess = null;
       currentResolve = null;
       reject(err);
-    });
-  });
-};
-
-const writeSilenceToFifo = (): Promise<void> => {
-  return new Promise((resolve) => {
-    const silence = spawn("ffmpeg", [
-      "-f",
-      "lavfi",
-      "-i",
-      "anullsrc=channel_layout=stereo:sample_rate=44100",
-      "-t",
-      "2",
-      "-f",
-      "mp3",
-      "pipe:1"
-    ]);
-
-    const fifoStream = createWriteStream(fifoPath);
-    silence.stdout.pipe(fifoStream);
-
-    silence.on("close", () => {
-      fifoStream.end();
-      resolve();
     });
   });
 };
@@ -141,8 +79,7 @@ const streamPlaylistLoop = async (playlistId: string) => {
     }
 
     console.log("🎵 Streaming:", song.title);
-    await writeSilenceToFifo();
-    await writeToFifo(audioUrl);
+    await streamSongToIcecast(audioUrl);
     console.log("✅ Finished streaming song. Moving to next...");
   }
 };
@@ -167,9 +104,6 @@ export const stream = async (req: Request, res: Response) => {
   res.status(200).send("Starting Icecast stream...");
 
   try {
-    ensureFifoExists();
-    if (!ffmpegProcess) startFfmpegStream();
-
     const playlist = await playlistService.play(playlistId);
     const song = playlist?.currentPlaying;
     if (!song?.url) {
@@ -186,7 +120,7 @@ export const stream = async (req: Request, res: Response) => {
     }
 
     console.log("▶️ Starting stream with:", song.title);
-    await writeToFifo(firstUrl);
+    await streamSongToIcecast(firstUrl);
     await streamPlaylistLoop(playlistId);
   } catch (err) {
     console.error("❌ Stream crashed:", err);
