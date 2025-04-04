@@ -126,6 +126,10 @@ export const stream = async (req: Request, res: Response) => {
     }
 
     console.log("▶️ Starting stream with:", song.title);
+    if (song.introUrl) {
+      console.log("🎵 Playing intro for song:", song.title);
+      await streamSongToIcecast(song.introUrl);
+    }
     await streamSongToIcecast(firstUrl);
     await streamPlaylistLoop(playlistId);
   } catch (err) {
