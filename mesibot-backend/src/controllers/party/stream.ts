@@ -126,6 +126,8 @@ export const stream = async (req: Request, res: Response) => {
     }
 
     console.log("▶️ Starting stream with:", song.title);
+    wsManager.notifyPlaylistUpdate(playlistId, playlist?.queue ?? [], song);
+
     if (song.introUrl) {
       console.log("🎵 Playing intro for song:", song.title);
       await streamSongToIcecast(song.introUrl);
