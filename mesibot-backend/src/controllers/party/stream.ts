@@ -81,7 +81,10 @@ const streamPlaylistLoop = async (playlistId: string) => {
 
     console.log("🎵 Streaming:", song.title);
     wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
-
+    if (song.introUrl) {
+      await streamSongToIcecast(song.introUrl);
+    }
+    
     await streamSongToIcecast(audioUrl);
     console.log("✅ Finished streaming song. Moving to next...");
   }
