@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import { fetchAudioUrl } from "../../services/streaming";
 import { playlistService } from "../../services/playlist";
 import { Party } from "../../models/Party";
-import { DJ_PASS } from "../../env";
 import { wsManager } from "../..";
 
 let currentSongProcess: ChildProcess | null = null;
@@ -60,7 +59,7 @@ const streamSongToIcecast = (url: string): Promise<void> => {
   });
 };
 
-const streamPlaylistLoop = async (playlistId: string) => {
+const streamPlaylistLoop = async (partyId: string, playlistId: string) => {
   currentPlaylistId = playlistId;
 
   while (isStreaming && !isPaused) {
@@ -80,7 +79,8 @@ const streamPlaylistLoop = async (playlistId: string) => {
     }
 
     console.log("🎵 Streaming:", song.title);
-    wsManager.notifyPlaylistUpdate(playlist._id.toString(), playlist.queue, song);
+    wsManager.notifyPlaylistUpdate(partyId, playlist.queue, song);
+
     if (song.introUrl) {
       console.log("🎵 Playing intro for song:", song.title);
       await streamSongToIcecast(song.introUrl);
@@ -126,14 +126,14 @@ export const stream = async (req: Request, res: Response) => {
     }
 
     console.log("▶️ Starting stream with:", song.title);
-    wsManager.notifyPlaylistUpdate(playlistId, playlist?.queue ?? [], song);
+    wsManager.notifyPlaylistUpdate(partyId, playlist?.queue ?? [], song);
 
     if (song.introUrl) {
       console.log("🎵 Playing intro for song:", song.title);
       await streamSongToIcecast(song.introUrl);
     }
     await streamSongToIcecast(firstUrl);
-    await streamPlaylistLoop(playlistId);
+    await streamPlaylistLoop(partyId, playlistId);
   } catch (err) {
     console.error("❌ Stream crashed:", err);
     isStreaming = false;
@@ -152,6 +152,8 @@ export const pauseStream = (req: Request, res: Response) => {
 };
 
 export const resumeStream = async (req: Request, res: Response) => {
+  const { partyId } = req.params;
+
   if (!isPaused || !currentPlaylistId) {
     res.status(400).send("Cannot resume");
     return;
@@ -159,7 +161,7 @@ export const resumeStream = async (req: Request, res: Response) => {
 
   isPaused = false;
   console.log("▶️ Resuming stream...");
-  streamPlaylistLoop(currentPlaylistId);
+  streamPlaylistLoop(partyId, currentPlaylistId);
   res.status(200).send("Resumed stream");
 };
 
