@@ -47,6 +47,7 @@ class WebSocketManager {
   }
 
   private addConnection(partyId: string, ws: WebSocket) {
+    console.log(`[WS] Client requested to connect to party ${partyId}`);
     if (!this.partiesConnections.has(partyId)) {
       this.partiesConnections.set(partyId, new Set());
     }
