@@ -36,6 +36,7 @@ export class WebSocketService {
       this.ws.onmessage = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
+          console.log("[WS] Message recieved", data);
           const eventHandler = this.events[data.type];
           if (eventHandler) {
             eventHandler(data.payload);
