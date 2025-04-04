@@ -74,6 +74,7 @@ class WebSocketManager {
 
     connections.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
+        console.log("Updating socket with changes", { client: client.url, update });
         client.send(JSON.stringify(update));
       }
     });
