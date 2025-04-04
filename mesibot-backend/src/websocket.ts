@@ -52,6 +52,7 @@ class WebSocketManager {
     }
 
     this.partiesConnections.get(partyId)?.add(ws);
+    console.log(`[WS] Client connected to party ${partyId}. Total: ${this.partiesConnections.get(partyId)?.size}`);
   }
 
   private removeConnection(partyId: string, ws: WebSocket) {
@@ -63,6 +64,8 @@ class WebSocketManager {
 
   public notifyPlaylistUpdate(partyId: string, songs: any[], currentSong: any | null) {
     const connections = this.partiesConnections.get(partyId);
+    console.log(`[WS] Notify ${partyId} update. Connections: ${connections?.size ?? 0}`);
+
     if (!connections) {
       return;
     }
@@ -74,7 +77,7 @@ class WebSocketManager {
 
     connections.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        console.log("Updating socket with changes", { client: client.url, update });
+        console.log("Updating socket with changes", update);
         client.send(JSON.stringify(update));
       }
     });
