@@ -4,6 +4,7 @@ import { fetchAudioUrl } from "../../services/streaming";
 import { playlistService } from "../../services/playlist";
 import { Party } from "../../models/Party";
 import { DJ_PASS } from "../../env";
+import { wsManager } from "../..";
 
 let currentSongProcess: ChildProcess | null = null;
 let currentResolve: (() => void) | null = null;
@@ -79,6 +80,8 @@ const streamPlaylistLoop = async (playlistId: string) => {
     }
 
     console.log("🎵 Streaming:", song.title);
+    wsManager.notifyPlaylistUpdate(playlistId, playlist.queue, playlist.currentPlaying);
+
     await streamSongToIcecast(audioUrl);
     console.log("✅ Finished streaming song. Moving to next...");
   }
