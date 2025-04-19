@@ -11,17 +11,27 @@ import { Playlist } from "../../../components/Playlist";
 export const PlaylistView = () => {
   const [openModal, setOpenModal] = useState(false);
   const [songs, setSongs] = useState<any[]>([]);
+  const [playedSongs, setPlayedSongs] = useState<any[]>([]);
   const [currentSong, setCurrentSong] = useState<any>(null);
   const { websocketService } = useAppContext();
 
   const { party } = useAppContext();
 
-  const updateSongs = ({ currentSong, songs }: { currentSong: Song | null; songs: Song[] }) => {
+  const updateSongs = ({
+    currentSong,
+    songs,
+    playedSongs
+  }: {
+    currentSong: Song | null;
+    songs: Song[];
+    playedSongs: Song[];
+  }) => {
     if (currentSong) {
       setCurrentSong({ ...currentSong, number: 1 });
     }
 
     setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
+    setPlayedSongs(playedSongs);
   };
 
   useEffect(() => {
@@ -37,7 +47,7 @@ export const PlaylistView = () => {
 
   return (
     <>
-      <Playlist currentSong={currentSong} songs={songs} />
+      <Playlist currentSong={currentSong} songs={songs} playedSongs={playedSongs} />
       <AddSong onClick={() => setOpenModal(true)} />
       <AddSongModal open={openModal} onClose={() => setOpenModal(false)} />
     </>

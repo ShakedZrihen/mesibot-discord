@@ -63,11 +63,12 @@ export const getPlaylistSongs = async (partyId: string) => {
 
     return {
       songs: response.data?.queue.length || response.data?.currentPlaying ? response.data?.queue : response.data?.songs,
-      currentSong: response.data?.currentPlaying ?? null
+      currentSong: response.data?.currentPlaying ?? null,
+      playedSongs: response.data?.played ?? []
     };
   } catch (error) {
     console.error("❌ Error fetching songs:", error);
-    return { songs: [], currentSong: null };
+    return { songs: [], currentSong: null, playedSongs: [] };
   }
 };
 

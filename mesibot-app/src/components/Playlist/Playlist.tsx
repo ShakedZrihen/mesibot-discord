@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { SongRow } from "./SongRow/SongRow";
 import { SongRow as SongRowType } from "./types";
 import { MusicPlayer } from "./Player";
@@ -6,9 +6,10 @@ import { MusicPlayer } from "./Player";
 interface PlaylistProps {
   currentSong: SongRowType | null;
   songs: SongRowType[];
+  playedSongs: SongRowType[];
 }
 
-export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
+export const Playlist = ({ currentSong, songs, playedSongs }: PlaylistProps) => {
   return (
     <Box
       sx={{
@@ -22,6 +23,9 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
       }}
     >
       <MusicPlayer currentSong={currentSong} />
+      <Typography variant="h6" style={{ margin: "1rem 0" }}>
+        Next Songs
+      </Typography>
       <Box
         sx={{
           overflowY: "auto",
@@ -32,6 +36,21 @@ export const Playlist = ({ currentSong, songs }: PlaylistProps) => {
       >
         {songs.map((song) => (
           <SongRow key={song.number} {...song} />
+        ))}
+      </Box>
+      <Typography variant="h6" style={{ margin: "1rem 0" }}>
+        History
+      </Typography>
+      <Box
+        sx={{
+          overflowY: "auto",
+          flex: 1,
+          WebkitOverflowScrolling: "touch",
+          paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
+        }}
+      >
+        {playedSongs.map((song) => (
+          <SongRow key={song.number} {...song} played/>
         ))}
       </Box>
     </Box>
