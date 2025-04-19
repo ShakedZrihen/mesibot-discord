@@ -26,7 +26,7 @@ export const SongRow = (props: SongRowProps) => {
         </Typography>
         <Box>
           <Typography variant="body1" color={played ? "textDisabled" : "textPrimary"}>
-            {formatSongName(title)}
+          <span style={{ fontWeight: 700 }}>{addedBy.name}{">"}</span> {formatSongName(title)}
           </Typography>
         </Box>
       </Box>
