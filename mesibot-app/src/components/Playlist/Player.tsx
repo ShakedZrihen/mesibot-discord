@@ -90,7 +90,7 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
           </Typography>
           {currentSong && (
             <Typography variant="caption" sx={{ color: "#b3b3b3", textAlign: { xs: "center", sm: "left" } }}>
-              {currentSong.title} by {currentSong.artist}
+              {currentSong.title}
             </Typography>
           )}
         </Box>

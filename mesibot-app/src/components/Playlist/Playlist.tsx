@@ -23,36 +23,44 @@ export const Playlist = ({ currentSong, songs, playedSongs }: PlaylistProps) => 
       }}
     >
       <MusicPlayer currentSong={currentSong} />
-      <Typography variant="h6" style={{ margin: "1rem 0" }}>
-        Next Songs
-      </Typography>
-      <Box
-        sx={{
-          overflowY: "auto",
-          flex: 1,
-          WebkitOverflowScrolling: "touch",
-          paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
-        }}
-      >
-        {songs.map((song) => (
-          <SongRow key={song.number} {...song} />
-        ))}
-      </Box>
-      <Typography variant="h6" style={{ margin: "1rem 0" }}>
-        History
-      </Typography>
-      <Box
-        sx={{
-          overflowY: "auto",
-          flex: 1,
-          WebkitOverflowScrolling: "touch",
-          paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
-        }}
-      >
-        {playedSongs.map((song) => (
-          <SongRow key={song.number} {...song} played/>
-        ))}
-      </Box>
+      {songs.length > 0 && (
+        <>
+          <Typography variant="h6" style={{ margin: "1rem 0" }}>
+            Next Songs
+          </Typography>
+          <Box
+            sx={{
+              overflowY: "auto",
+              flex: 1,
+              WebkitOverflowScrolling: "touch",
+              paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
+            }}
+          >
+            {songs.map((song) => (
+              <SongRow key={song.number} {...song} />
+            ))}
+          </Box>
+        </>
+      )}
+      {playedSongs.length > 0 && playedSongs.length + 1 !== songs.length && (
+        <>
+          <Typography variant="h6" style={{ margin: "1rem 0" }}>
+            History
+          </Typography>
+          <Box
+            sx={{
+              overflowY: "auto",
+              flex: 1,
+              WebkitOverflowScrolling: "touch",
+              paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
+            }}
+          >
+            {playedSongs.map((song) => (
+              <SongRow key={song.number} {...song} played />
+            ))}
+          </Box>
+        </>
+      )}
     </Box>
   );
 };
