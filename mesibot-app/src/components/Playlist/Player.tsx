@@ -63,8 +63,14 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
       play(partyId);
     }
 
-    audioRef.current?.play();
-    setIsPlaying(true);
+    audioRef.current
+      ?.play()
+      .then(() => {
+        setIsPlaying(true);
+      })
+      .catch((err) => {
+        console.error("Playback failed:", err);
+      });
   };
 
   return (
@@ -119,7 +125,7 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
             </IconButton>
           </Box>
           <Box sx={{ width: "100%", position: "relative" }}>
-            <audio ref={audioRef} src={streamUrl} autoPlay />
+            <audio ref={audioRef} src={streamUrl} />
             {/* <ProgressBar>
               <Progress sx={{ width: `${progress}%` }} />
             </ProgressBar> */}
