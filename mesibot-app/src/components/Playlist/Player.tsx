@@ -48,7 +48,7 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
   const [isPlaying, setIsPlaying] = useState(false);
   const { party } = useAppContext();
   const audioRef = useRef<HTMLAudioElement>(null);
-  const streamUrl = "https://api.mesi.bot:49152/listen/kol_hakulz/stream";
+  const streamUrl = "https://radio.mesi.bot/listen/kol_hakulz/stream";
 
   const partyId = party?._id ?? null;
 
