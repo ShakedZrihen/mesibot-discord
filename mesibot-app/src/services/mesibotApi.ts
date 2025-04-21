@@ -62,7 +62,7 @@ export const getPlaylistSongs = async (partyId: string) => {
     const response = await axios.get(`${BASE_URL}${API_PATHS.parties}/${partyId}/playlist`);
 
     return {
-      songs: response.data?.queue.length || response.data?.currentPlaying ? response.data?.queue : response.data?.songs,
+      songs: response.data?.queue?.length || response.data?.currentPlaying ? response.data?.queue : response.data?.songs,
       currentSong: response.data?.currentPlaying ?? null,
       playedSongs: response.data?.played ?? []
     };

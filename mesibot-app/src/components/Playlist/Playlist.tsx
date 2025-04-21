@@ -23,7 +23,7 @@ export const Playlist = ({ currentSong, songs, playedSongs }: PlaylistProps) => 
       }}
     >
       <MusicPlayer currentSong={currentSong} />
-      {songs.length > 0 && (
+      {songs?.length > 0 && (
         <>
           <Typography variant="h6" style={{ margin: "1rem 0" }}>
             Next Songs
@@ -42,7 +42,7 @@ export const Playlist = ({ currentSong, songs, playedSongs }: PlaylistProps) => 
           </Box>
         </>
       )}
-      {playedSongs.length > 0 && playedSongs.length + 1 !== songs.length && (
+      {playedSongs?.length > 0 && playedSongs.length + 1 !== songs.length && (
         <>
           <Typography variant="h6" style={{ margin: "1rem 0" }}>
             History
