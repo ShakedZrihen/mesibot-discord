@@ -31,6 +31,7 @@ export const Playlist = ({ currentSong, songs, playedSongs }: PlaylistProps) => 
           <Box
             sx={{
               overflowY: "auto",
+              overflowX: "hidden",
               flex: 1,
               WebkitOverflowScrolling: "touch",
               paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
@@ -50,6 +51,7 @@ export const Playlist = ({ currentSong, songs, playedSongs }: PlaylistProps) => 
           <Box
             sx={{
               overflowY: "auto",
+              overflowX: "hidden",
               flex: 1,
               WebkitOverflowScrolling: "touch",
               paddingBottom: { xs: "2rem", sm: "1rem" } // Added padding at the bottom
