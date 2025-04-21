@@ -20,7 +20,8 @@ export const PlaylistView = () => {
   const updateSongs = ({
     currentSong,
     songs,
-    playedSongs
+    playedSongs,
+    played
   }: {
     currentSong: Song | null;
     songs: Song[];
@@ -31,7 +32,7 @@ export const PlaylistView = () => {
     }
 
     setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
-    setPlayedSongs(playedSongs);
+    setPlayedSongs(playedSongs ?? played);
   };
 
   useEffect(() => {
