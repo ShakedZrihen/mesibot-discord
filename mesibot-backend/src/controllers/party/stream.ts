@@ -79,7 +79,7 @@ const streamPlaylistLoop = async (partyId: string, playlistId: string) => {
     }
 
     console.log("🎵 Streaming:", song.title);
-    wsManager.notifyPlaylistUpdate(partyId, playlist.queue, song);
+    wsManager.notifyPlaylistUpdate(partyId, playlist.queue, song, playlist.played);
 
     if (song.introUrl) {
       console.log("🎵 Playing intro for song:", song.title);
@@ -126,7 +126,7 @@ export const stream = async (req: Request, res: Response) => {
     }
 
     console.log("▶️ Starting stream with:", song.title);
-    wsManager.notifyPlaylistUpdate(partyId, playlist?.queue ?? [], song);
+    wsManager.notifyPlaylistUpdate(partyId, playlist?.queue ?? [], song, playlist?.played ?? []);
 
     if (song.introUrl) {
       console.log("🎵 Playing intro for song:", song.title);

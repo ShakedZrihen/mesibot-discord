@@ -92,7 +92,12 @@ const playSong = async (player: any, playlistId: string, song: { url: string; in
 
     if (updatedPlaylist?.currentPlaying) {
       playSong(player, playlistId, updatedPlaylist.currentPlaying);
-      wsManager.notifyPlaylistUpdate(playlistId, updatedPlaylist.queue, updatedPlaylist.currentPlaying);
+      wsManager.notifyPlaylistUpdate(
+        playlistId,
+        updatedPlaylist.queue,
+        updatedPlaylist.currentPlaying,
+        updatedPlaylist.played
+      );
     } else {
       console.log("🎵 Playlist ended.");
     }

@@ -6,6 +6,7 @@ interface PlaylistUpdate {
   payload: {
     songs: any[];
     currentSong: any | null;
+    played: any | null;
   };
 }
 
@@ -63,7 +64,7 @@ class WebSocketManager {
     }
   }
 
-  public notifyPlaylistUpdate(partyId: string, songs: any[], currentSong: any | null) {
+  public notifyPlaylistUpdate(partyId: string, songs: any[], currentSong: any | null, played: any | null) {
     const connections = this.partiesConnections.get(partyId);
     console.log(`[WS] Notify ${partyId} update. Connections: ${connections?.size ?? 0}`);
 
@@ -73,7 +74,7 @@ class WebSocketManager {
 
     const update: PlaylistUpdate = {
       type: "playlistUpdate",
-      payload: { songs, currentSong }
+      payload: { songs, currentSong, played }
     };
 
     connections.forEach((client) => {
