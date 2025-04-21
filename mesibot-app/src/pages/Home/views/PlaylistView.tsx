@@ -26,6 +26,7 @@ export const PlaylistView = () => {
     currentSong: Song | null;
     songs: Song[];
     playedSongs: Song[];
+    played?: Song[];
   }) => {
     if (currentSong) {
       setCurrentSong({ ...currentSong, number: 1 });
