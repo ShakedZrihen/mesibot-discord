@@ -126,7 +126,7 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
               {isPlaying ? <Pause /> : <PlayArrow />}
             </IconButton>
             <IconButton
-              size="small"
+              size="large"
               sx={{ color: "#fff" }}
               onClick={() => {
                 downvoteSong(party?._id ?? null, currentSong!._id, connectedUser, playlistId);
