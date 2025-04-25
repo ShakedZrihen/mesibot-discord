@@ -71,7 +71,7 @@ export const downvoteSontInPlaylist = async (req: Request, res: Response) => {
   }
 
   try {
-    const playlist = await playlistService.downvoteSong(playlistId, songId, userId);
+    const playlist = await playlistService.downvoteSong(playlistId, songId, userId, partyId);
 
     if (playlist) {
       wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying, playlist.played);

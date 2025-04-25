@@ -3,7 +3,7 @@ import { Playlist } from "../../models/Playlist";
 import { StatisticsService } from "../statistics";
 import { skip } from "./skip";
 
-export const downvoteSong = async (playlistId: string, songId: string, userId: string) => {
+export const downvoteSong = async (playlistId: string, songId: string, userId: string, partyId?: string) => {
   const playlist = await Playlist.findById(playlistId);
   if (!playlist) {
     console.log("(Playlists) No playlist");
@@ -27,7 +27,10 @@ export const downvoteSong = async (playlistId: string, songId: string, userId: s
     if (currentSong.downvotes > 0) {
       console.log("Skipping");
       skip();
-      wsManager.notifySongSkipped(playlistId, currentSong);
+      if (partyId) {
+        wsManager.notifySongSkipped(partyId, currentSong);
+      }
+      return;
     }
 
     // Update song rank
