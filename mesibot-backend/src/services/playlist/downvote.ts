@@ -24,7 +24,7 @@ export const downvoteSong = async (playlistId: string, songId: string, userId: s
     currentSong.downvotes += 1;
     currentSong.downvotedBy.push(userId);
 
-    if (currentSong.downvotes > 0) {
+    if (currentSong.downvotes > 2) {
       console.log("Skipping");
       skip();
       if (partyId) {
