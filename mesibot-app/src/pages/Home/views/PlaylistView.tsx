@@ -25,7 +25,7 @@ export const PlaylistView = () => {
     setOpenSkipModal(true);
     setTimeout(() => {
       setOpenSkipModal(false);
-    }, 2000);
+    }, 6000);
   };
 
   const updateSongs = ({
