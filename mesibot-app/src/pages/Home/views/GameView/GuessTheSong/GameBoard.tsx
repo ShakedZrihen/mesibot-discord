@@ -12,7 +12,10 @@ import {
 import * as mesibotApi from "../../../../../services/mesibotApi";
 import { useAppContext } from "../../../../../context/useAppContext";
 import { SuccessModal } from "../components/SuccessModal";
-
+import { EventTypes } from "../../../../../services/websocketService";
+import { BuzzerView } from '../../BuzzerView/BuzzerView';
+import { BuzzerModal } from '../../BuzzerView/BuzzerModal';
+import { pressTheBuzzer } from "../../../../../services/mesibotApi" 
 interface GussSong {
   songName: string;
   artist: string;
@@ -20,14 +23,55 @@ interface GussSong {
   hebLyrics: string[];
 }
 
+type User = {
+  user: {
+    name: string;
+    avatar: string;
+  }
+};
+type Clicker = {
+  name: string;
+  avatar: string;
+};
+
 export const GameBoard = () => {
   const [currentSong, setCurrentSong] = useState<GussSong | null>(null);
   const [showLines, setShowLines] = useState<number>(1);
   const [guess, setGuess] = useState<string>("");
+
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+
+  const [BuzzermodalOpen, setBuzzermodalOpen] = useState<boolean>(false);
+
   const [songsGuessed, setSongGuessed] = useState<string[]>([]);
   const [round, setRound] = useState(1);
-  const { party } = useAppContext();
+  const { party, websocketService, connectedUser } = useAppContext();
+
+  const [clicker, setClicker] = useState<Clicker | null>(null);
+  
+  // TODO: add function that will get user:User as input and will popup the "Button Pressed" Modal
+
+  const BuzzerClicked = ({ user, showModal }: { user: Clicker; showModal: boolean }) => {
+
+    console.log("Clicked By", user, showModal);
+    if (!user) {
+      return;
+    }
+
+    setBuzzermodalOpen(showModal);
+    setClicker(user);
+  };
+
+  // console.log("clickerniga", clicker)
+  
+  useEffect(() => {
+
+    if (!party?._id) {
+      return;
+    }
+
+    websocketService?.signEvent(EventTypes.BUZZER_PRESSED, BuzzerClicked);
+  }, [party, websocketService]);
 
   useEffect(() => {
     const getSong = async (attempts = 1) => {
@@ -58,15 +102,19 @@ export const GameBoard = () => {
 
   const handleGuess = () => {
     if (currentSong && guess.toLowerCase() === currentSong.songName.toLowerCase()) {
-      setModalOpen(true);
+      setModalOpen(true)
+    } else {
+      handleModalClose()
     }
   };
 
   const handleModalClose = () => {
+    pressTheBuzzer(party?._id || "", clicker, false);
     setModalOpen(false);
   };
 
   const nextRound = (guessed: boolean) => {
+    console.log("Guessed: ", guessed)
     setRound((prev) => prev + 1);
     setShowLines(1);
     setGuess("");
@@ -98,31 +146,46 @@ export const GameBoard = () => {
 
   return (
     <GameBoardContainer>
+      {
+        BuzzermodalOpen && clicker ? (
+          clicker.name === connectedUser?.name ? (
+              <BuzzerModal
+                name={clicker.name}
+                avatar={clicker.avatar}
+                clicker={true}
+                guess={guess}
+                modalOpen={BuzzermodalOpen}
+                setGuess={setGuess}
+                handleGuess={handleGuess}
+              />
+          ) : (
+              <BuzzerModal
+                name={clicker.name}
+                avatar={clicker.avatar}
+                clicker={false}
+                guess={guess}
+                modalOpen={BuzzermodalOpen}
+                setGuess={setGuess}
+                handleGuess={handleGuess}
+              />
+            // <div>
+            //   <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+            //   </Box>
+            // </div>
+  
+          )
+        ) : null
+      }
+
       <LinesContainer>
-        {currentSong?.hebLyrics.map((line, index) => (
-          <StyledLine index={index} showLines={showLines} key={index}>
-            {line}
-          </StyledLine>
-        ))}
+      {currentSong?.hebLyrics.map((line, index) => (
+        <StyledLine index={index} showLines={showLines} key={index}>
+          {line}
+        </StyledLine>
+      ))}
       </LinesContainer>
-      <TextField
-        value={guess}
-        onChange={(e) => setGuess(e.target.value)}
-        placeholder="?מה שם השיר"
-        variant="outlined"
-        size="small"
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <IconButton onClick={handleGuess} edge="start">
-                  <ChevronLeftIcon />
-                </IconButton>
-              </InputAdornment>
-            )
-          }
-        }}
-      />
+      <BuzzerView small={true}/>
+
       <ActionsContainer>
         {showNextButton && (
           <NextButton variant="contained" onClick={handleShowNextLine}>
@@ -135,6 +198,9 @@ export const GameBoard = () => {
           </SkipButton>
         )}
       </ActionsContainer>
+
+      
+
       <SuccessModal
         modalOpen={modalOpen}
         handleModalClose={handleModalClose}

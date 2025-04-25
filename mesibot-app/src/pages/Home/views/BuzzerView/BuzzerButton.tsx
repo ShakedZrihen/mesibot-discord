@@ -1,4 +1,6 @@
 import { useState, KeyboardEvent, TouchEvent } from "react";
+import { useAppContext } from "../../../../context/useAppContext";
+import { pressTheBuzzer } from '../../../../services/mesibotApi'
 
 interface BuzzerButtonProps {
   selectedColorValue: string;
@@ -8,14 +10,28 @@ interface BuzzerButtonProps {
 
 export function BuzzerButton({ selectedColorValue, onPlay, small }: BuzzerButtonProps) {
   const [isPressed, setIsPressed] = useState(false);
+  const { party, connectedUser } = useAppContext();
 
   const handlePressStart = () => {
     setIsPressed(true);
+    setTimeout(() => {
+      handlePressEnd();
+    }, 100);
     onPlay();
   };
 
   const handlePressEnd = () => {
-    setIsPressed(false);
+    setTimeout(() => {
+      setIsPressed(false);
+    }, 100);
+
+    if(!party || !party._id || !connectedUser) {
+      console.log("Party, connectedUser", party, connectedUser)
+      return;
+    }
+    console.log("Pressing buzzer for", connectedUser.name, "in party", party._id);
+
+    pressTheBuzzer(party?._id, connectedUser, true)
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -34,8 +50,8 @@ export function BuzzerButton({ selectedColorValue, onPlay, small }: BuzzerButton
     <button
       className={`buzzer-button ${isPressed ? "active" : ""}`}
       onMouseDown={handlePressStart}
-      onMouseUp={handlePressEnd}
-      onMouseLeave={handlePressEnd}
+      // onMouseUp={handlePressEnd}
+      // onMouseLeave={handlePressEnd}
       onTouchStart={(e: TouchEvent) => {
         e.preventDefault();
         handlePressStart();

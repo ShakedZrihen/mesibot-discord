@@ -11,6 +11,7 @@ const API_PATHS = {
   downvote: "/playlist/downvote",
   addSong: "/playlist/add-song",
   getGuessSong: "/games/guess-the-song/song",
+  pressTheBuzzer: "/games/guess-the-song/buzzer",
   getShemkodBoard: "/games/shemkod/start",
   updateShemkodBoard: "/games/shemkod/update-word",
   nextRoundShemkod: "/games/shemkod/next-round"
@@ -163,4 +164,18 @@ export const getAvailableGames = async () => {
 export const nextRoundShemkod = async (partyId: string) => {
   const response = await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.nextRoundShemkod}`);
   return response.data;
+};
+
+export const pressTheBuzzer = async (partyId: string, user: User | null, showModal: boolean) => {
+  if (!user) {
+    console.log("no User", user)
+    return;
+  }
+  
+  if(!partyId) {
+    console.log("no partyId", partyId)
+    return;
+  }
+
+  await axios.post(`${BASE_URL}${API_PATHS.parties}/${partyId}${API_PATHS.pressTheBuzzer}`, { user, partyId, showModal });
 };
