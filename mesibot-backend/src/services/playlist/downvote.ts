@@ -1,6 +1,6 @@
-import { wsManager } from "../..";
 import { Playlist } from "../../models/Playlist";
 import { StatisticsService } from "../statistics";
+import { skip } from "./skip";
 
 export const downvoteSong = async (playlistId: string, songId: string, userId: string) => {
   const playlist = await Playlist.findById(playlistId);
@@ -10,6 +10,28 @@ export const downvoteSong = async (playlistId: string, songId: string, userId: s
   }
 
   const song = playlist.queue.id(songId);
+  const cuurentSong: any = playlist.currentPlaying;
+
+  if (cuurentSong._id.toString() === songId) {
+    // Remove user from upvotedBy if they previously upvoted
+    if (cuurentSong.upvotedBy.includes(userId)) {
+      cuurentSong.upvotes -= 1;
+      cuurentSong.upvotedBy = cuurentSong.upvotedBy.filter((id: string) => id !== userId);
+    }
+
+    // Add downvote
+    cuurentSong.downvotes += 1;
+    cuurentSong.downvotedBy.push(userId);
+
+    if (cuurentSong.downvotes > 0) {
+      console.log("Skipping");
+      return skip();
+    }
+
+    // Update song rank
+    cuurentSong.rank = cuurentSong.upvotes - cuurentSong.downvotes;
+  }
+
   if (!song) {
     console.log("(Playlists) No song found");
     return;

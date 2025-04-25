@@ -1,12 +1,15 @@
-import { spawn, ChildProcess } from "child_process";
+import { spawn } from "child_process";
 import { Request, Response } from "express";
 import { fetchAudioUrl } from "../../services/streaming";
 import { playlistService } from "../../services/playlist";
 import { Party } from "../../models/Party";
 import { wsManager } from "../..";
-
-let currentSongProcess: ChildProcess | null = null;
-let currentResolve: (() => void) | null = null;
+import {
+  currentResolve,
+  currentSongProcess,
+  setCurrentResolve,
+  setCurrentSongProcess
+} from "../../services/playlist/stream";
 
 let isStreaming = false;
 let isPaused = false;
@@ -37,23 +40,23 @@ const streamSongToIcecast = (url: string): Promise<void> => {
       "mp3",
       ICECAST_URL
     ]);
-    currentSongProcess = ffmpeg;
-    currentResolve = () => ffmpeg.kill("SIGKILL");
+    setCurrentSongProcess(ffmpeg);
+    setCurrentResolve(() => ffmpeg.kill("SIGKILL"));
 
     ffmpeg.stderr?.on("data", (data) => {
       console.log("FFmpeg:", data.toString());
     });
 
     ffmpeg.on("close", () => {
-      currentSongProcess = null;
-      currentResolve = null;
+      setCurrentSongProcess(null);
+      setCurrentResolve(null);
       resolve();
     });
 
     ffmpeg.on("error", (err) => {
       console.error("❌ FFmpeg error:", err);
-      currentSongProcess = null;
-      currentResolve = null;
+      setCurrentSongProcess(null);
+      setCurrentResolve(null);
       reject(err);
     });
   });
@@ -143,7 +146,7 @@ export const stream = async (req: Request, res: Response) => {
 export const pauseStream = (req: Request, res: Response) => {
   if (currentSongProcess) {
     currentSongProcess.kill("SIGKILL");
-    currentSongProcess = null;
+    setCurrentSongProcess(null);
   }
 
   isPaused = true;

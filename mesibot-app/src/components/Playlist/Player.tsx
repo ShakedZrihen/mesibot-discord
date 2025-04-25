@@ -3,7 +3,7 @@ import { Box, IconButton, Typography, Stack } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { PlayArrow, Pause, SkipNext, VolumeUp } from "@mui/icons-material";
 import { SongRow } from "./types";
-import { play } from "../../services/mesibotApi";
+import { downvoteSong, play } from "../../services/mesibotApi";
 import { useAppContext } from "../../context/useAppContext";
 
 const PlayerWrapper = styled(Box)(({ theme }) => ({
@@ -46,7 +46,7 @@ const PlayerWrapper = styled(Box)(({ theme }) => ({
 
 export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const { party } = useAppContext();
+  const { party, connectedUser, playlistId } = useAppContext();
   const audioRef = useRef<HTMLAudioElement>(null);
   const streamUrl = "https://radio.mesi.bot/listen/kol_hakulz/stream";
 
@@ -121,7 +121,11 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
               {isPlaying ? <Pause /> : <PlayArrow />}
             </IconButton>
             <IconButton size="small" sx={{ color: "#fff" }}>
-              <SkipNext />
+              <SkipNext
+                onClick={() => {
+                  downvoteSong(party?._id ?? null, currentSong!._id, connectedUser, playlistId);
+                }}
+              />
             </IconButton>
           </Box>
           <Box sx={{ width: "100%", position: "relative" }}>
