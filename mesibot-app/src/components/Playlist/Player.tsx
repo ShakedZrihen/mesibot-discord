@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Box, IconButton, Typography, Stack } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { PlayArrow, Pause, SkipNext, VolumeUp } from "@mui/icons-material";
+import { PlayArrow, Pause, SkipNext } from "@mui/icons-material";
 import { SongRow } from "./types";
 import { downvoteSong, play } from "../../services/mesibotApi";
 import { useAppContext } from "../../context/useAppContext";
@@ -27,22 +27,6 @@ const PlayerWrapper = styled(Box)(({ theme }) => ({
   marginBottom: "2rem",
   borderRadius: "0.5rem"
 }));
-
-// const ProgressBar = styled(Box)(({ theme }) => ({
-//   height: 4,
-//   backgroundColor: "#404040",
-//   width: "100%",
-//   position: "relative",
-//   borderRadius: 2,
-//   marginTop: theme.spacing(1)
-// }));
-
-// const Progress = styled(Box)({
-//   height: "100%",
-//   backgroundColor: "#1db954",
-//   borderRadius: 2,
-//   transition: "width 1s linear"
-// });
 
 export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -78,20 +62,41 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
       {/* Left section - Song Info */}
       <Box
         sx={{
-          width: { xs: "100%", sm: "30%" },
+          width: { xs: "100%", sm: "40%" },
           display: "flex",
           alignItems: "center",
           justifyContent: { xs: "center", sm: "flex-start" }
         }}
       >
         <Box sx={{ ml: { xs: 0, sm: 2 } }}>
-          <Typography variant="subtitle1" sx={{ color: "#fff", textAlign: { xs: "center", sm: "left" } }}>
+          <Typography variant="subtitle1" sx={{ color: "#fff", textAlign: "center" }}>
             Now Playing
           </Typography>
           {currentSong && (
-            <Typography variant="caption" sx={{ color: "#b3b3b3", textAlign: { xs: "center", sm: "left" } }}>
-              {currentSong.title}
-            </Typography>
+            <>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "#b3b3b3",
+                  textAlign: "center",
+                  width: "fit-content"
+                }}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                {currentSong.title}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: "#b3b3b3", textAlign: "center" }}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                added by {currentSong?.addedBy.name}
+              </Typography>
+            </>
           )}
         </Box>
       </Box>
@@ -128,26 +133,8 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
               />
             </IconButton>
           </Box>
-          <Box sx={{ width: "100%", position: "relative" }}>
-            <audio ref={audioRef} src={streamUrl} />
-            {/* <ProgressBar>
-              <Progress sx={{ width: `${progress}%` }} />
-            </ProgressBar> */}
-          </Box>
+          <audio ref={audioRef} src={streamUrl} />
         </Stack>
-      </Box>
-
-      {/* Right section - Volume */}
-      <Box
-        sx={{
-          width: { xs: "100%", sm: "30%" },
-          display: { xs: "none", sm: "flex" },
-          justifyContent: "flex-end",
-          alignItems: "center",
-          pr: 2
-        }}
-      >
-        <VolumeUp sx={{ color: "#fff" }} />
       </Box>
     </PlayerWrapper>
   );
