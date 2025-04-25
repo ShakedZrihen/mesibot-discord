@@ -1,3 +1,4 @@
+import { wsManager } from "../..";
 import { Playlist } from "../../models/Playlist";
 import { StatisticsService } from "../statistics";
 import { skip } from "./skip";
@@ -10,26 +11,27 @@ export const downvoteSong = async (playlistId: string, songId: string, userId: s
   }
 
   const song = playlist.queue.id(songId);
-  const cuurentSong: any = playlist.currentPlaying;
+  const currentSong: any = playlist.currentPlaying;
 
-  if (cuurentSong._id.toString() === songId) {
+  if (currentSong._id.toString() === songId) {
     // Remove user from upvotedBy if they previously upvoted
-    if (cuurentSong.upvotedBy.includes(userId)) {
-      cuurentSong.upvotes -= 1;
-      cuurentSong.upvotedBy = cuurentSong.upvotedBy.filter((id: string) => id !== userId);
+    if (currentSong.upvotedBy.includes(userId)) {
+      currentSong.upvotes -= 1;
+      currentSong.upvotedBy = currentSong.upvotedBy.filter((id: string) => id !== userId);
     }
 
     // Add downvote
-    cuurentSong.downvotes += 1;
-    cuurentSong.downvotedBy.push(userId);
+    currentSong.downvotes += 1;
+    currentSong.downvotedBy.push(userId);
 
-    if (cuurentSong.downvotes > 2) {
+    if (currentSong.downvotes > 0) {
       console.log("Skipping");
-      return skip();
+      skip();
+      wsManager.notifySongSkipped(playlistId, currentSong);
     }
 
     // Update song rank
-    cuurentSong.rank = cuurentSong.upvotes - cuurentSong.downvotes;
+    currentSong.rank = currentSong.upvotes - currentSong.downvotes;
   }
 
   if (!song) {

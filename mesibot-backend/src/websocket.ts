@@ -1,6 +1,12 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { Server } from "http";
 
+interface SongSkipped {
+  type: "songSkipped";
+  payload: {
+    song: any;
+  };
+}
 interface PlaylistUpdate {
   type: "playlistUpdate";
   payload: {
@@ -62,6 +68,27 @@ class WebSocketManager {
     if (this.partiesConnections.get(partyId)?.size === 0) {
       this.partiesConnections.delete(partyId);
     }
+  }
+
+  public notifySongSkipped(partyId: string, song: any) {
+    const connections = this.partiesConnections.get(partyId);
+    console.log(`[WS] Notify ${partyId} song is skipped. Connections: ${connections?.size ?? 0}`);
+
+    if (!connections) {
+      return;
+    }
+
+    const update: SongSkipped = {
+      type: "songSkipped",
+      payload: { song }
+    };
+
+    connections.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        console.log("Updating socket with changes", update);
+        client.send(JSON.stringify(update));
+      }
+    });
   }
 
   public notifyPlaylistUpdate(partyId: string, songs: any[], currentSong: any | null, played: any | null) {

@@ -7,6 +7,8 @@ import { getPlaylistSongs } from "../../../services/mesibotApi";
 import { EventTypes } from "../../../services/websocketService";
 import { Song } from "../../../types/playlist";
 import { Playlist } from "../../../components/Playlist";
+import SkipSongModal from "./SkipModal";
+import { SongRow } from "../../../components/Playlist/types";
 
 export const PlaylistView = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -14,8 +16,17 @@ export const PlaylistView = () => {
   const [playedSongs, setPlayedSongs] = useState<any[]>([]);
   const [currentSong, setCurrentSong] = useState<any>(null);
   const { websocketService } = useAppContext();
+  const [openSkipModal, setOpenSkipModal] = useState(false);
+  const [skipModalProps, setSkipModalProps] = useState({});
 
   const { party } = useAppContext();
+  const skippedSong = ({ song }: { song: SongRow }) => {
+    setSkipModalProps({ song });
+    setOpenSkipModal(true);
+    setTimeout(() => {
+      setOpenSkipModal(false);
+    }, 2000);
+  };
 
   const updateSongs = ({
     currentSong,
@@ -45,6 +56,7 @@ export const PlaylistView = () => {
     getPlaylistSongs(party._id).then(updateSongs);
 
     websocketService?.signEvent(EventTypes.PLAYLIST_UPDATE, updateSongs);
+    websocketService?.signEvent(EventTypes.SONG_SKIPPED, skippedSong);
   }, [party, websocketService]);
 
   return (
@@ -52,6 +64,7 @@ export const PlaylistView = () => {
       <Playlist currentSong={currentSong} songs={songs} playedSongs={playedSongs} />
       <AddSong onClick={() => setOpenModal(true)} />
       <AddSongModal open={openModal} onClose={() => setOpenModal(false)} />
+      <SkipSongModal open={openSkipModal} {...skipModalProps} />
     </>
   );
 };
