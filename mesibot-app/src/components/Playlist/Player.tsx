@@ -125,12 +125,14 @@ export const MusicPlayer = ({ currentSong }: { currentSong: SongRow | null }) =>
             >
               {isPlaying ? <Pause /> : <PlayArrow />}
             </IconButton>
-            <IconButton size="small" sx={{ color: "#fff" }}>
-              <SkipNext
-                onClick={() => {
-                  downvoteSong(party?._id ?? null, currentSong!._id, connectedUser, playlistId);
-                }}
-              />
+            <IconButton
+              size="small"
+              sx={{ color: "#fff" }}
+              onClick={() => {
+                downvoteSong(party?._id ?? null, currentSong!._id, connectedUser, playlistId);
+              }}
+            >
+              <SkipNext />
             </IconButton>
           </Box>
           <audio ref={audioRef} src={streamUrl} />
