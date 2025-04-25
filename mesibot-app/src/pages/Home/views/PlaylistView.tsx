@@ -21,11 +21,13 @@ export const PlaylistView = () => {
 
   const { party } = useAppContext();
   const skippedSong = ({ song }: { song: SongRow }) => {
-    setSkipModalProps({ song });
-    setOpenSkipModal(true);
+    setTimeout(() => {
+      setSkipModalProps({ song });
+      setOpenSkipModal(true);
+    }, 6000);
     setTimeout(() => {
       setOpenSkipModal(false);
-    }, 6000);
+    }, 10000);
   };
 
   const updateSongs = ({
