@@ -30,6 +30,7 @@ export const Content = ({
       <Autocomplete
         sx={{ marginTop: "1rem" }}
         freeSolo
+        filterOptions={(options) => options}
         options={suggestions}
         getOptionLabel={(option) => (option as Song).title}
         onInputChange={(_, newInputValue) => {

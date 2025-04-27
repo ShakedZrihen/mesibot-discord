@@ -5,36 +5,58 @@ import { ping } from "./ping";
 import { play } from "./play";
 import { REST, Routes } from "discord.js";
 import { resume } from "./resume";
+import { OptionType, SupportedCommands } from "./types";
 
 const commands = [
   {
-    name: "play",
+    name: SupportedCommands.play,
     description: "Play music from YouTube",
     options: [
       {
         name: "playlist-id",
-        type: 3, // Type 3 = STRING
+        type: OptionType.string,
         description: "playlist id",
         required: true
       }
     ]
   },
   {
-    name: "pause",
+    name: SupportedCommands.pause,
     description: "Pause playlist"
   },
   {
-    name: "resume",
+    name: SupportedCommands.resume,
     description: "Resume playlist"
   },
   {
-    name: "join",
+    name: SupportedCommands.join,
     description: "Make the bot join your voice channel"
   },
   {
-    name: "ping",
+    name: SupportedCommands.ping,
     description: "Replies with Pong!"
   }
+  // TODO: implement below
+  // {
+  //   name: SupportedCommands.clearQueue,
+  //   description: "Clear queue"
+  // },
+  // {
+  //   name: SupportedCommands.deleteSong,
+  //   description: "delete song from playlist",
+  //   options: [
+  //     {
+  //       name: "songName",
+  //       type: OptionType.string,
+  //       description: "song name",
+  //       required: true
+  //     }
+  //   ]
+  // },
+  // {
+  //   name: SupportedCommands.skip,
+  //   description: "skip the current song"
+  // }
 ];
 
 async function registerCommands() {

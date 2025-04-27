@@ -7,21 +7,46 @@ import { getPlaylistSongs } from "../../../services/mesibotApi";
 import { EventTypes } from "../../../services/websocketService";
 import { Song } from "../../../types/playlist";
 import { Playlist } from "../../../components/Playlist";
+import SkipSongModal from "./SkipModal";
+import { SongRow } from "../../../components/Playlist/types";
 
 export const PlaylistView = () => {
   const [openModal, setOpenModal] = useState(false);
   const [songs, setSongs] = useState<any[]>([]);
+  const [playedSongs, setPlayedSongs] = useState<any[]>([]);
   const [currentSong, setCurrentSong] = useState<any>(null);
   const { websocketService } = useAppContext();
+  const [openSkipModal, setOpenSkipModal] = useState(false);
+  const [skipModalProps, setSkipModalProps] = useState({});
 
   const { party } = useAppContext();
+  const skippedSong = ({ song }: { song: SongRow }) => {
+    setTimeout(() => {
+      setSkipModalProps({ song });
+      setOpenSkipModal(true);
+    }, 6000);
+    setTimeout(() => {
+      setOpenSkipModal(false);
+    }, 10000);
+  };
 
-  const updateSongs = ({ currentSong, songs }: { currentSong: Song | null; songs: Song[] }) => {
+  const updateSongs = ({
+    currentSong,
+    songs,
+    playedSongs,
+    played
+  }: {
+    currentSong: Song | null;
+    songs: Song[];
+    playedSongs: Song[];
+    played?: Song[];
+  }) => {
     if (currentSong) {
       setCurrentSong({ ...currentSong, number: 1 });
     }
 
     setSongs(songs.map((song: Song, index: number) => ({ ...song, number: index + 2 })));
+    setPlayedSongs(playedSongs ?? played);
   };
 
   useEffect(() => {
@@ -33,13 +58,15 @@ export const PlaylistView = () => {
     getPlaylistSongs(party._id).then(updateSongs);
 
     websocketService?.signEvent(EventTypes.PLAYLIST_UPDATE, updateSongs);
+    websocketService?.signEvent(EventTypes.SONG_SKIPPED, skippedSong);
   }, [party, websocketService]);
 
   return (
     <>
-      <Playlist currentSong={currentSong} songs={songs} />
+      <Playlist currentSong={currentSong} songs={songs} playedSongs={playedSongs} />
       <AddSong onClick={() => setOpenModal(true)} />
       <AddSongModal open={openModal} onClose={() => setOpenModal(false)} />
+      <SkipSongModal open={openSkipModal} {...skipModalProps} />
     </>
   );
 };

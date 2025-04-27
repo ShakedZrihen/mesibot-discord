@@ -5,6 +5,7 @@ import axios from "axios";
 
 const API_PATHS = {
   songs: "/api/songs",
+  playlistStart: "/playlist/start",
   parties: "/api/party",
   upvote: "/playlist/upvote",
   downvote: "/playlist/downvote",
@@ -15,14 +16,22 @@ const API_PATHS = {
   nextRoundShemkod: "/games/shemkod/next-round"
 };
 
-export const searchSongs = async (searchTerm: string) => {
+export const searchSongs = async (searchTerm: string, options?: { signal?: AbortSignal }) => {
   try {
-    const response = await fetch(`${BASE_URL}${API_PATHS.songs}?q=${searchTerm}`);
+    const response = await fetch(`${BASE_URL}${API_PATHS.songs}?q=${searchTerm}`, { signal: options?.signal });
     const data = await response.json();
     return data;
   } catch (error) {
     console.error("❌ Error fetching songs:", error);
   }
+};
+
+export const play = async (partyId: string | null) => {
+  if (!partyId) {
+    return;
+  }
+
+  await axios.get(`https://api.mesi.bot${API_PATHS.parties}/${partyId}${API_PATHS.playlistStart}`);
 };
 
 export const addSongToPlaylist = async (
@@ -53,12 +62,13 @@ export const getPlaylistSongs = async (partyId: string) => {
     const response = await axios.get(`${BASE_URL}${API_PATHS.parties}/${partyId}/playlist`);
 
     return {
-      songs: response.data?.queue.length || response.data?.currentPlaying ? response.data?.queue : response.data?.songs,
-      currentSong: response.data?.currentPlaying ?? null
+      songs: response.data?.queue?.length || response.data?.currentPlaying ? response.data?.queue : response.data?.songs,
+      currentSong: response.data?.currentPlaying ?? null,
+      playedSongs: response.data?.played ?? []
     };
   } catch (error) {
     console.error("❌ Error fetching songs:", error);
-    return { songs: [], currentSong: null };
+    return { songs: [], currentSong: null, playedSongs: [] };
   }
 };
 

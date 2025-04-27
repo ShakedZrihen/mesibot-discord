@@ -30,7 +30,7 @@ export const addSongToPlaylist = async (req: Request, res: Response) => {
 
   try {
     const playlist = await playlistService.addSong(title, url, youtubeId, playlistId, addedBy, introUrl);
-    wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying);
+    wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying, playlist.played);
 
     res.status(201).json({ message: "Song added successfully", playlist });
   } catch (error) {
@@ -51,7 +51,7 @@ export const upvoteSongInPlaylist = async (req: Request, res: Response) => {
   try {
     const playlist = await playlistService.upvoteSong(playlistId, songId, userId);
     if (playlist) {
-      wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying);
+      wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying, playlist.played);
     }
 
     res.json({ message: "Upvoted successfully", playlist });
@@ -71,10 +71,10 @@ export const downvoteSontInPlaylist = async (req: Request, res: Response) => {
   }
 
   try {
-    const playlist = await playlistService.downvoteSong(playlistId, songId, userId);
+    const playlist = await playlistService.downvoteSong(playlistId, songId, userId, partyId);
 
     if (playlist) {
-      wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying);
+      wsManager.notifyPlaylistUpdate(partyId, playlist.queue, playlist.currentPlaying, playlist.played);
     }
 
     res.json({ message: "Downvoted successfully", playlist });

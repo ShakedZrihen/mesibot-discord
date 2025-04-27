@@ -2,7 +2,8 @@ import { BASE_DOMAIN, BASE_URL } from "../consts/general";
 
 export enum EventTypes {
   PLAYLIST_UPDATE = "playlistUpdate",
-  BUZZER_PRESSED = "buzzerPressed"
+  BUZZER_PRESSED = "buzzerPressed",
+  SONG_SKIPPED = "songSkipped"
 }
 
 export class WebSocketService {
@@ -36,6 +37,7 @@ export class WebSocketService {
       this.ws.onmessage = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
+          console.log("[WS] Message recieved", data);
           const eventHandler = this.events[data.type];
           if (eventHandler) {
             eventHandler(data.payload);

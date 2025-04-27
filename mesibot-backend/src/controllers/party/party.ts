@@ -5,6 +5,7 @@ import { playlistService } from "../../services/playlist";
 import { addSongToPlaylist, downvoteSontInPlaylist, getPartyPlaylist, upvoteSongInPlaylist } from "./playlist/playlist";
 import { guessTheSongRouter } from "./games/guess-the-song";
 import { shemcodeRouter } from "./games/shemkod";
+import { stream, pauseStream, resumeStream, skipSong } from "./stream";
 
 export const partyRouter = Router();
 
@@ -12,16 +13,13 @@ partyRouter.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, host, games } = req.body;
 
-    // Validate request
     if (!title || !host?.name || !host?.avatar) {
       res.status(400).json({ error: "Missing required fields" });
       return;
     }
 
-    // Fetch selected game templates
     const gameTemplates = await GameTemplate.find({ _id: { $in: games } });
 
-    // Clone games for the party
     const gameInstances = gameTemplates.map((template) => ({
       templateId: template._id,
       title: template.name,
@@ -33,7 +31,6 @@ partyRouter.post("/", async (req: Request, res: Response): Promise<void> => {
 
     const playlist = await playlistService.create(title);
 
-    // Create a new party
     const newParty = new Party({
       title,
       host,
@@ -86,6 +83,11 @@ partyRouter.get("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+partyRouter.get("/:partyId/playlist/start", stream);
+partyRouter.get("/:partyId/playlist/pause", pauseStream);
+partyRouter.get("/:partyId/playlist/resume", resumeStream);
+partyRouter.get("/:partyId/playlist/skip", skipSong);
+
 partyRouter.get("/:partyId/playlist", getPartyPlaylist);
 partyRouter.post("/:partyId/playlist/add-song", addSongToPlaylist);
 partyRouter.post("/:partyId/playlist/upvote", upvoteSongInPlaylist);
@@ -108,7 +110,6 @@ partyRouter.post("/:partyId/join", async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Check if participant already exists
     const existingParticipant = party.participants.find((p) => p.name === name && p.avatar === avatar);
 
     if (existingParticipant) {
@@ -116,7 +117,6 @@ partyRouter.post("/:partyId/join", async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Create new participant
     const newParticipant = { name, avatar, score: 0 };
     party.participants.push(newParticipant);
 
@@ -130,5 +130,4 @@ partyRouter.post("/:partyId/join", async (req: Request, res: Response): Promise<
 });
 
 partyRouter.use("/:partyId/games/guess-the-song", guessTheSongRouter);
-
 partyRouter.use("/:partyId/games/shemkod", shemcodeRouter);
