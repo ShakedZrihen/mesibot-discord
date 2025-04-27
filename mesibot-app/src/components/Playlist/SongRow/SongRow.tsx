@@ -21,7 +21,6 @@ import {
   ListSwiperContent,
   Direction,
 } from "../../ListSwiper";
-import { MouseEventHandler } from "react";
 
 interface SongRowProps extends SongRowType {
   onLike?: () => void;
